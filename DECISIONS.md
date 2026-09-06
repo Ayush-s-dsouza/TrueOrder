@@ -338,6 +338,23 @@ hypothetical fixed-rate let-out home loan) raises rather than silently
 picking one, since guessing there would reintroduce the exact category-
 error risk this decision exists to eliminate.
 
+That raise is proven at two separate levels, not one: `test_schema.py`
+proves `DivergenceRationale` itself cannot be CONSTRUCTED with more than
+one mechanism (the type-level guarantee); `test_sequence.py`'s
+`test_compound_tax_and_fee_on_the_same_debt_raises_through_the_real_
+pipeline` separately proves the PIPELINE never TRIES to build one when a
+real, ambiguous portfolio reaches it -- a fixed-rate, let-out home loan
+under the old regime, fed through `compute_ordering` (the actual entry
+point, not the internal helper called directly), confirmed to trigger both
+`tax_delta` and `fee_delta` on the same debt and then confirmed to raise.
+A type-level guarantee alone would leave open the possibility that
+`adjust.py` or `sequence.py` never actually exercises the ambiguous case in
+practice -- proving the validator works is not the same claim as proving
+the pipeline reaches it, and this project's five real debt types do
+include exactly one shape (a home loan with `rate_type=fixed` and
+`occupancy=let_out`) capable of triggering it, however atypical in real
+Indian lending practice.
+
 `impact.py` and its tests are unchanged in behavior but reframed in every
 docstring/name to match: `net_cost_delta > 0` is a REQUIRED regression for
 every tax-driven sample; `net_cost_delta`'s sign for the fee-driven sample
