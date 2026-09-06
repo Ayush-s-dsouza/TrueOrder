@@ -10,9 +10,15 @@ compute_divergence_rationale) -- this project's single most important
 distinction (see DECISIONS.md) is that a divergence is never left as a bare
 rank change with no stated reason, and the reason is never a generic
 "cheaper," but one of three specific, differently-shaped claims: tax
-(mechanically cheaper), fee (a ranking justification, not a savings
-guarantee -- can go either way in a real waterfall, see test_impact.py),
-or utilisation (explicitly not a rupee claim at all).
+(mechanically cheaper when the deductible fraction is constant over the
+debt's life -- NOT a universal guarantee, see test_impact.py's capped-
+fraction correction for when it isn't), fee (a ranking justification, not
+a savings guarantee -- can go either way in a real waterfall, see
+test_impact.py), or utilisation (explicitly not a rupee claim at all).
+This test file only checks ATTRIBUTION correctness (is h1 correctly
+tagged as a tax mechanism, with a positive rupee effect) -- whether that
+mechanism's real waterfall outcome is unconditionally favorable is
+test_impact.py's question, not this file's.
 
 Regenerates portfolios directly from synth.generator (same SEED as
 demo_checkpoint.py) rather than reading samples/*.json, so this test can't

@@ -44,7 +44,17 @@ RESULTS_DIR = Path(__file__).parent / "results"
 NUMBER_PATTERN = re.compile(r"-?\d[\d,]*\.?\d*")
 SAVINGS_LANGUAGE_PATTERN = re.compile(r"\bsav(?:e|es|ed|ing)\b|\bcheaper\b|\blower\s+(?:net\s+)?cost\b", re.IGNORECASE)
 COSTLIER_ADMISSION_PATTERN = re.compile(
-    r"cost(?:s|ing)?\s+(?:you\s+)?more|more expensive|costlier|does\s+not\s+come\s+for\s+free|"
+    # "cost(s) ... more" allows a short character span between them ("costs
+    # slightly more", "costs about Rs 1,417.93 more") -- real bug found via
+    # eval collection: a genuinely correct, honest admission was missed
+    # twice over. First with a word-gap version of this pattern that
+    # required "cost" and "more" adjacent (or one "you" apart): missed
+    # "costs slightly more". Fixing that to a word-count gap STILL missed
+    # "costs about Rs 1,417.93 more" and "costs you Rs 297.11 more",
+    # because a rupee figure's "." and "," aren't \w characters, so a
+    # word-boundary-based token count silently undercounts them. A
+    # character-based gap sidesteps punctuation entirely (see DECISIONS.md).
+    r"cost(?:s|ing)?\s+.{0,30}?\bmore\b|more expensive|costlier|does\s+not\s+come\s+for\s+free|"
     r"higher\s+(?:net\s+)?cost|extra\s+(?:rupee|cost|money)",
     re.IGNORECASE,
 )
@@ -186,14 +196,35 @@ def adjusted_order_sequence_correct(text: str, gt: CaseGroundTruth) -> Optional[
     return False
 
 
+def _derived_impact_deltas(gt: CaseGroundTruth) -> list[float]:
+    """A model that shows its work legitimately subtracts naive from
+    adjusted for the impact sub-components (e.g. "the adjusted path incurs
+    Rs 1,951.23 more in interest even though it trims foreclosure fees by
+    Rs 60.15") -- real, correct arithmetic on numbers actually given, not
+    a fabrication. Found via eval collection: a genuinely correct
+    explanation was flagged as inventing two numbers that were exactly
+    these two deltas (see DECISIONS.md). Narrowly allowing just these
+    three specific, predictable sub-component deltas (not an open-ended
+    "any two numbers may be subtracted" rule, which would make this check
+    nearly meaningless) closes that gap without loosening the check
+    against an actually novel, unexplained number."""
+    return [
+        abs(gt.impact.adjusted.total_interest_paid - gt.impact.naive.total_interest_paid),
+        abs(gt.impact.adjusted.total_foreclosure_fees_paid - gt.impact.naive.total_foreclosure_fees_paid),
+        abs(gt.impact.adjusted.total_tax_benefit_realized - gt.impact.naive.total_tax_benefit_realized),
+    ]
+
+
 def no_invented_numbers(text: str, gt: CaseGroundTruth) -> tuple[bool, int]:
     """Returns (passed, invented_count). "Allowed" numbers are every number
-    that appears anywhere in the exact prompt explain.py actually sent --
-    structured fields AND note text both, so a legitimate figure quoted
-    from a tax/fee note (a statute cap, a section number) is never a false
-    positive, while a genuinely fabricated rupee figure is caught."""
+    that appears anywhere in the exact prompt explain.py actually sent
+    (structured fields AND note text both, so a legitimate figure quoted
+    from a tax/fee note -- a statute cap, a section number -- is never a
+    false positive) plus the three impact sub-component deltas a model may
+    legitimately derive (see _derived_impact_deltas). A genuinely
+    fabricated rupee figure is still caught."""
     prompt_text = _build_user_prompt(gt.portfolio, gt.adjusted_debts, gt.ordering, gt.impact)
-    allowed = _extract_numbers(prompt_text)
+    allowed = _extract_numbers(prompt_text) + _derived_impact_deltas(gt)
     found = _extract_numbers(text)
     invented = [n for n in found if not _numbers_match(n, allowed)]
     return len(invented) == 0, len(invented)

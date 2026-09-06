@@ -214,9 +214,18 @@ class AdjustedDebt(BaseModel):
 # divergence between naive and adjusted must be attributed to exactly one
 # of them, with the right kind of claim attached:
 #   - TAX:         a verified deduction lowers this debt's true cost.
-#                  Mechanically cheaper, always, once realized (see
-#                  impact.py's tax-driven regression tests).
-#                  net_rupee_effect > 0 whenever this mechanism fires.
+#                  Mechanically cheaper, always, once realized -- BUT ONLY
+#                  when the deductible fraction stays constant over the
+#                  debt's life (see impact.py's tax-driven regression
+#                  tests). When a rupee cap actively binds (e.g. interest
+#                  exceeding rental income plus the Sec 71(3A) Rs 2L cap),
+#                  the fraction improves as the balance amortizes down,
+#                  and the real simulated outcome can go either way by a
+#                  small margin -- see impact.py's capped-fraction
+#                  correction, found by running the eval at scale, not
+#                  assumed. net_rupee_effect > 0 whenever this mechanism
+#                  fires either way; only the WATERFALL OUTCOME's
+#                  guarantee is conditional, not this rupee figure itself.
 #   - FEE:         a verified foreclosure charge raises this debt's true
 #                  cost above its stated rate. Correctly identifies it as
 #                  more expensive than naive assumes, but promoting it in

@@ -517,3 +517,110 @@ independently-confirmed ground truth is a bug report about the metric,
 not a bug report about the thing being measured -- treating it as the
 latter would have meant shipping a faithfulness eval that was itself
 unfaithful.
+
+## SECOND correction to the tax guarantee: the Rs 2L cap breaks the constant-shield-fraction assumption too
+
+This is the most important finding of the whole eval run, and it corrects
+a claim this project made confidently, in writing, in multiple files
+(schema.py, DECISIONS.md, test_impact.py, test_sequence.py): that the TAX
+mechanism is "mechanically cheaper, ALWAYS, when it fires" -- stated as an
+unconditional guarantee, with a test marked "if this ever fails, that is a
+real bug." Running the FULL 42-case eval manifest (not just the 3
+hand-picked cases used during development) surfaced 3 negative
+`net_cost_delta` values, all for `letout_home_old_regime_loss_capped`, all
+for indices this project had never individually inspected before
+(`_000`, `_002`, `_005` under the eval's own seed -- a DIFFERENT seed from
+the one used when this segment's single tested index, under the
+checkpoint seed, happened to come out positive and was trusted as
+representative).
+
+The mechanism, confirmed by inspecting the actual numbers: this segment's
+home loan interest exceeds rental income plus the Section 71(3A) Rs 2L
+cap, so its deductible amount is a FIXED Rs 3,00,000 regardless of
+balance. As the balance amortizes down over the loan's life, annual
+interest shrinks, so that fixed Rs 3,00,000 becomes a LARGER FRACTION of a
+SMALLER number -- the shield genuinely IMPROVES over time instead of
+staying constant. adjust.py's ranking uses one point-in-time snapshot of
+that fraction (necessarily, since it ranks before any simulation runs),
+so for this specific segment it can no longer guarantee the sign of the
+real, time-varying simulated outcome. Sweeping all 6 manifest indices of
+this exact segment: 3 positive, 3 negative, every one under 0.05% of the
+multi-million-rupee net costs involved -- a genuine, tiny, real effect,
+not a bug (the simple `letout_home_old_regime` and
+`education_loan_80e_old_regime` segments, whose deductible fractions ARE
+constant over their lives, stayed positive across all 6 indices each,
+confirming the guarantee holds exactly where the constant-fraction
+assumption holds and nowhere else).
+
+This is structurally the SAME finding as the fee mechanism's "can go
+either way" property, discovered independently and earlier in this
+project: a static ranking heuristic doesn't guarantee a real waterfall
+outcome. The difference is that this project explicitly, confidently
+claimed TAX was exempt from that caveat -- and was wrong, in exactly the
+"confidently wrong until someone checks" way this entire project line
+exists to catch, just aimed at itself instead of at Dhruva this time.
+
+**Decision**: every place that claimed an unconditional tax guarantee now
+scopes it correctly: `schema.py`'s module comment, `test_impact.py`
+(split into `test_tax_mechanism_with_a_constant_shield_fraction_requires_
+net_cost_delta_positive`, covering only the two genuinely-constant
+segments, and a new `test_tax_mechanism_with_a_binding_cap_can_go_
+either_way`, which sweeps all 6 indices of the capped segment and asserts
+BOTH signs genuinely occur -- proving the nuance is real and stable, not
+a fluke), and `test_sequence.py`'s module docstring.
+
+**Rejected alternative**: treating the 3 negative deltas as noise to
+average away, or re-picking a "representative" index that happens to be
+positive and moving on. Rejected because the whole point of running the
+eval at full scale instead of trusting a handful of hand-picked cases is
+to catch exactly this kind of claim that only held for the specific
+numbers originally checked -- discarding the inconvenient result would
+have defeated the reason to run the eval at all.
+
+## Two more real metrics bugs found by running the full baseline collection, not just the smoke test
+
+The 3-case smoke test (see the entry above) caught three bugs; running
+the full 58-call baseline collection caught two more that the smoke
+test's small sample happened not to exercise:
+
+1. **`COSTLIER_ADMISSION_PATTERN` required "cost" and "more" adjacent** (or
+   one "you" apart). Real, honest admissions like "it costs slightly more
+   in practice" and "the adjusted plan costs Rs 1,891.08 more than the
+   naive plan" were missed. Fixed once to a word-count gap, which STILL
+   missed "costs about Rs 1,417.93 more" and "costs you Rs 297.11 more" --
+   a rupee figure's "." and "," aren't `\w` characters, so a word-boundary
+   token count silently undercounts them. Fixed properly to a
+   character-count gap, which doesn't care about punctuation.
+2. **`no_invented_numbers` couldn't recognize correct arithmetic on given
+   numbers.** A genuinely correct explanation said "the adjusted path
+   incurs Rs 1,951.23 more in interest even though it trims foreclosure
+   fees by Rs 60.15" -- both numbers are exact, verified differences
+   between the given naive/adjusted `total_interest_paid` and
+   `total_foreclosure_fees_paid` figures, not fabrications. Fixed by
+   narrowly allowing the three specific, predictable impact sub-component
+   deltas a model may legitimately derive (`_derived_impact_deltas`) --
+   deliberately NOT an open-ended "any two given numbers may be
+   subtracted" rule, which would make the whole check nearly meaningless
+   given how many numbers a typical case's prompt contains.
+
+Both are permanent regression tests in `tests/test_eval_metrics.py` using
+the exact real strings that exposed them. After all five metrics fixes
+(three from the smoke test, two from here), the full baseline collection
+(58 calls, 0 errors) scores **100% faithfulness** -- every check, on
+every row, including every case that originally looked like a failure.
+
+**Decision**: this is reported as the real, current number, not rounded
+down defensively or caveated into meaninglessness -- but the path to it
+is documented in full (five bugs, one of them a correction to this
+project's own central tax claim) so a reader trusts the number because
+they can see exactly what it took to earn it, not despite what it took.
+
+**Rejected alternative**: stopping at the smoke test's fixes and reporting
+whatever number the full run produced without investigating the
+remaining ~19% `cost_direction_correct` failures. Rejected for the same
+reason as the entry above: every prior metric disagreement in this
+project turned out to be a bug in the metric, not the thing being
+measured, and stopping the investigation early -- especially right before
+finding that one of the "failures" was actually the tax-guarantee
+correction hiding in the same batch -- would have shipped both a wrong
+number and a missed finding.

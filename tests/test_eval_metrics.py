@@ -14,10 +14,12 @@ from __future__ import annotations
 from adjust import adjust_portfolio
 from eval.ground_truth import ground_truth_for_case
 from eval.metrics import (
+    COSTLIER_ADMISSION_PATTERN,
     _is_negated,
     _numbers_match,
     adjusted_order_sequence_correct,
     no_false_tax_claim_for_blocked_debts,
+    no_invented_numbers,
 )
 from schema import HomeLoan, Portfolio, PropertyOccupancy, RateType, TaxRegime
 from sequence import compute_ordering
@@ -45,6 +47,63 @@ def _self_occupied_new_regime_case() -> dict:
         ],
     )
     return _case_for_portfolio(portfolio)
+
+
+def test_costlier_admission_pattern_allows_a_rupee_figure_between_cost_and_more():
+    """Real bug, found twice over via actual eval collection (see
+    DECISIONS.md): a word-gap version of this pattern still missed real,
+    honest admissions like "costs about Rs 1,417.93 more" and "costs you
+    Rs 297.11 more", because a rupee figure's "." and "," aren't \\w
+    characters, so a word-count-based gap silently undercounts them.
+    Fixed to a character-based gap. All examples below are verbatim
+    substrings from real collected baseline explanations that were
+    manually confirmed correct and honest before being flagged as metric
+    false negatives."""
+    for text in (
+        "it costs slightly more in practice",
+        "the adjusted sequence costs about Rs 1,417.93 more over the life of the loans",
+        "the adjusted path costs about Rs 587.64 more",
+        "the adjusted plan costs Rs 1,891.08 more than the naive plan",
+        "the adjusted path costs you Rs 297.11 more",
+        "The adjusted order costs Rs 949.66 more",
+    ):
+        assert COSTLIER_ADMISSION_PATTERN.search(text), f"expected a match in: {text!r}"
+
+
+def test_no_invented_numbers_allows_the_interest_and_fee_deltas():
+    """Real bug: a genuinely correct explanation said "the adjusted path
+    incurs Rs 1,951.23 more in interest even though it trims foreclosure
+    fees by Rs 60.15" -- both numbers are exact, correct differences
+    between the given naive/adjusted total_interest_paid and
+    total_foreclosure_fees_paid figures, not fabrications. Verified against
+    the real case that surfaced this (fixed_auto_foreclosure_005)."""
+    from schema import AutoLoan, PersonalLoan
+
+    portfolio = Portfolio(
+        borrower_id="test",
+        tax_regime=TaxRegime.NEW,
+        marginal_tax_rate_pct=30.0,
+        debts=[
+            PersonalLoan(
+                debt_id="pl1", outstanding_balance=300_000, stated_apr_pct=11.0,
+                remaining_tenure_months=30, minimum_payment=12_000, rate_type=RateType.FLOATING,
+            ),
+            AutoLoan(
+                debt_id="a1", outstanding_balance=400_000, stated_apr_pct=9.0,
+                remaining_tenure_months=18, minimum_payment=24_000,
+                rate_type=RateType.FIXED, foreclosure_charge_pct=4.0,
+            ),
+        ],
+    )
+    gt = ground_truth_for_case(_case_for_portfolio(portfolio))
+    interest_delta = abs(gt.impact.adjusted.total_interest_paid - gt.impact.naive.total_interest_paid)
+    fee_delta = abs(gt.impact.adjusted.total_foreclosure_fees_paid - gt.impact.naive.total_foreclosure_fees_paid)
+    text = (
+        f"The adjusted path incurs Rs {interest_delta:,.2f} more in interest even though it "
+        f"trims foreclosure fees by Rs {fee_delta:,.2f}."
+    )
+    ok, count = no_invented_numbers(text, gt)
+    assert ok, f"expected the derived deltas to be allowed, got {count} invented numbers"
 
 
 def test_numbers_match_ignores_sign():

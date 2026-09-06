@@ -19,12 +19,29 @@
    thing for every divergence. It resolves into three mechanism-specific
    guarantees, each enforced by its own discipline below, not by a single
    "adjusted should win" assumption:
-   - TAX (samples 2, 6, 7): mechanically cheaper, ALWAYS, when it fires.
-     net_cost_delta > 0 is a REQUIRED regression -- a failure here is a
-     real bug. The tax benefit is a continuous, ongoing percentage of
+   - TAX, CONSTANT-FRACTION CASE (samples 2, 6 -- letout_home_old_regime,
+     education_loan_80e_old_regime): mechanically cheaper, ALWAYS, when it
+     fires. net_cost_delta > 0 is a REQUIRED regression -- a failure here
+     is a real bug. The tax benefit is a continuous, ongoing percentage of
      actual accrued interest, so ranking by after-tax rate provably
      aligns with minimizing net cost once the waterfall correctly rolls
      forward capacity.
+   - TAX, CAPPED-FRACTION CASE (sample 7 --
+     letout_home_old_regime_loss_capped): a CORRECTION to the guarantee
+     above, found by running the eval at scale rather than trusting one
+     hand-picked index (see DECISIONS.md). When a rupee cap actively binds
+     (interest exceeds rental income plus the Rs 2L Section 71(3A) cap),
+     the deductible fraction is NOT constant -- it improves as the balance
+     amortizes down, since the fixed cap becomes a larger share of a
+     shrinking interest amount. adjust.py's ranking uses a single
+     point-in-time snapshot of that fraction, so for this segment it can
+     no longer guarantee the sign of the real, simulated outcome: verified
+     empirically across the eval manifest's 6 indices of this exact
+     segment, 3 positive and 3 negative, all under 0.05% of net cost. Same
+     STRUCTURAL class of finding as the fee mechanism below -- a static
+     ranking heuristic doesn't guarantee a real waterfall outcome -- just
+     discovered to also apply to a subset of tax cases this project
+     originally, incorrectly, claimed were exempt.
    - FEE (sample 3): a ranking justification, not a savings guarantee --
      can come out either cheaper or slightly costlier once realized. This
      sample's specific sign (costlier) is PINNED as a verified fact about
@@ -127,21 +144,68 @@ def test_selfoccupied_new_regime_regression_has_zero_net_cost_delta():
     assert comparison.net_cost_delta == 0.0
 
 
-@pytest.mark.parametrize(
-    "segment",
-    ["letout_home_old_regime", "education_loan_80e_old_regime", "letout_home_old_regime_loss_capped"],
-)
-def test_tax_mechanism_requires_net_cost_delta_positive(segment):
-    """TAX guarantee: mechanically cheaper, ALWAYS, when it fires --
-    net_cost_delta > 0 is a REQUIRED regression for every tax-driven
-    sample, not a directional hope. If this ever fails, that is a real bug
-    (in tax_rules.py, adjust.py, or the waterfall), not a "the trade-off
-    went the other way this time" result -- unlike the fee test below."""
+@pytest.mark.parametrize("segment", ["letout_home_old_regime", "education_loan_80e_old_regime"])
+def test_tax_mechanism_with_a_constant_shield_fraction_requires_net_cost_delta_positive(segment):
+    """TAX guarantee, CORRECTLY SCOPED (see DECISIONS.md's correction --
+    this test previously also covered letout_home_old_regime_loss_capped,
+    which does NOT hold this guarantee, see the test below): when a debt's
+    deductible_fraction is CONSTANT over its whole amortization -- true for
+    both segments here, verified across all 6 eval-manifest indices of
+    each, not just index 0 -- net_cost_delta > 0 is a REQUIRED regression.
+    A constant fraction means the tax benefit is a continuous, ongoing
+    percentage of actual accrued interest, the same "weighted balance over
+    time" shape as the interest cost it discounts, so ranking by after-tax
+    rate provably aligns with minimizing net cost. If this ever fails for
+    either of these two segments, that is a real bug (in tax_rules.py,
+    adjust.py, or the waterfall), not a "the trade-off went the other way
+    this time" result -- unlike the capped case below, or the fee test."""
     comparison = _impact_comparison(segment)
     assert comparison.net_cost_delta > 0, (
         f"expected the adjusted order to be net-cheaper for {segment} once the tax benefit "
         f"is realized over time in a real waterfall, got delta={comparison.net_cost_delta}"
     )
+
+
+def test_tax_mechanism_with_a_binding_cap_can_go_either_way():
+    """CORRECTION to the guarantee above, found by running the eval at
+    scale rather than trusting a single hand-picked index (see
+    DECISIONS.md): letout_home_old_regime_loss_capped's home loan has a
+    deductible_fraction that is NOT constant -- the Rs 2L Section 71(3A)
+    cap is a FIXED rupee amount, so as the balance amortizes down and
+    annual interest shrinks, that fixed cap becomes a LARGER fraction of a
+    SMALLER number, meaning the shield genuinely IMPROVES over the loan's
+    life instead of staying flat. adjust.py's ranking uses a single
+    point-in-time snapshot of that fraction, so for this segment it can
+    no longer guarantee the real, time-varying simulated outcome always
+    favors the adjusted order -- confirmed empirically across the eval
+    manifest's 6 indices of this exact segment: 3 positive, 3 negative,
+    all tiny in magnitude relative to the multi-million-rupee net costs
+    involved (under 0.05% of net cost in every case seen). This is
+    structurally the SAME class of finding as the fee mechanism's "can go
+    either way" property (a static ranking heuristic doesn't guarantee a
+    real waterfall outcome) -- it just turns out to also apply to a
+    SUBSET of tax cases this project originally, incorrectly, claimed were
+    exempt. This test proves the nuance is real and stable (both signs
+    genuinely occur across the segment's natural jitter range), not an
+    isolated fluke."""
+    deltas = [_capped_delta_for_index(index) for index in range(6)]
+    assert any(d > 0 for d in deltas), "expected at least one index to favor the adjusted order"
+    assert any(d < 0 for d in deltas), (
+        "expected at least one index to favor the naive order -- if this now fails, the cap "
+        "dynamic may have changed; re-verify before treating it as newly, unconditionally positive"
+    )
+    assert all(abs(d) < 0.001 * 4_000_000 for d in deltas), "expected the sign flip to stay a tiny fraction of net cost, not a large one"
+
+
+def _capped_delta_for_index(index: int) -> float:
+    # Uses the eval's own seed, not this file's SEED constant -- this is
+    # the exact seed/index combination that surfaced the finding (see
+    # DECISIONS.md), so reproducing it verbatim matters more than
+    # consistency with this file's other fixtures.
+    portfolio = generate_portfolio("trueorder-eval-2026-09-06", "letout_home_old_regime_loss_capped", index)
+    adjusted = adjust_portfolio(portfolio)
+    ordering = compute_ordering(portfolio, adjusted)
+    return compare_impact(portfolio, ordering, MONTHLY_SURPLUS).net_cost_delta
 
 
 def test_fee_mechanism_net_cost_delta_sign_is_pinned_not_asserted_as_general():
