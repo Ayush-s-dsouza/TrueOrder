@@ -220,6 +220,93 @@ carried the latent bug forward into a project whose research phase already
 found and corrected two other inherited-assumption errors -- leaving a
 known-broken check in place would be inconsistent with that standard.
 
+## impact.py's first waterfall silently shrank the total budget every time a debt cleared
+
+The first version of `simulate_waterfall` kept `monthly_surplus` fixed
+forever and simply stopped paying a finished debt's minimum -- it never
+redirected that freed-up capacity anywhere. Every checkpoint sample's
+`net_cost_delta` came out favoring the NAIVE order, including the tax-driven
+divergence cases (`letout_home_old_regime`, `education_loan_80e_old_regime`)
+where the adjusted order should reliably win once tax benefit is properly
+realized over time. That result contradicted a hand-derived proof (a
+"weighted balance-over-time" exchange argument) that ranking by after-tax
+rate should minimize net cost -- a strong signal the discrepancy was a bug,
+not a real finding, and it was traced by instrumenting month-by-month
+per-debt payoff timing on `sample_002_letout_home_old_regime`: under the
+adjusted order, `h1` (home loan) only started receiving accelerated
+payments once `pl1` (personal loan) cleared at month 14, and `pl1`'s freed
+Rs 9,000/month minimum then simply vanished instead of compounding into
+`h1`'s payment -- delaying `h1`'s own payoff by exactly that gap, with no
+compensating benefit.
+
+**Decision**: `simulate_waterfall` now computes a fixed
+`total_monthly_capacity = sum(all original minimums) + monthly_surplus`
+once, and recomputes `surplus_this_month = total_monthly_capacity -
+(minimums still owed by currently active debts)` fresh every month -- so
+freed capacity from a paid-off debt automatically rolls into next month's
+surplus for the next-priority debt (the standard "snowball" effect).
+`tests/test_impact.py::test_freed_minimum_payment_rolls_forward_to_the_
+next_priority_debt` is a direct regression: it constructs a debt whose own
+minimum payment exactly breaks even against its own interest (guaranteed
+non-payoff on minimum alone), so the old bug would have made this specific
+test hang until `MAX_SIMULATION_MONTHS` and raise.
+
+**Rejected alternative**: keeping `monthly_surplus` fixed and documenting
+the freed-minimum loss as an intentional "conservative" assumption.
+Rejected because it isn't conservative, it's wrong -- no realistic
+household stops budgeting money toward debt once one card is paid off, and
+the resulting numbers were actively misleading (every divergence case
+looked like the adjusted order was worse, when for the tax cases it should
+provably not be).
+
+## The adjusted order is not always net-cost-cheaper -- verified, not assumed
+
+After fixing the roll-forward bug above, the tax-driven divergence samples
+correctly showed the adjusted order as net-cheaper. The fee-driven sample
+(`fixed_auto_foreclosure`) and the utilisation-heuristic sample
+(`utilisation_threshold`) still showed the adjusted order as slightly net-
+COSTLIER. Rather than treating this as a second bug, it was traced by hand
+(instrumenting per-debt payoff months and pre-payoff balances the same way)
+to two distinct, genuine mechanisms, not an implementation error:
+
+For `fixed_auto_foreclosure`: `a1` (auto loan, 9% nominal) gets promoted
+above `pl1` (personal loan, 11% nominal) because `a1`'s foreclosure-charge-
+annualized ranking rate (11.67%) exceeds `pl1`'s stated rate. But a
+foreclosure charge is a ONE-TIME cost proportional to whatever balance
+remains at the moment of payoff -- it does not scale with "how long you
+delay" the way a continuous tax-shield rate does. Delaying `pl1` (the
+genuinely higher-NOMINAL-rate debt) to accelerate `a1` increases total
+nominal interest by more (~Rs 2,314 in this sample) than the one-time fee
+difference saves (~Rs 27) -- a real, mechanical consequence of blending a
+lump-sum cost into a rate-shaped ranking key, not a defect in the waterfall.
+
+For `utilisation_threshold`: `cc2`'s adjusted rate is IDENTICAL to its
+stated rate (30%, no tax or fee adjustment at all) -- it is promoted purely
+by the utilisation-crossing heuristic, which protects a CIBIL score, not
+rupees. Promoting it ahead of `pl1` (genuinely 32% nominal) necessarily
+costs a little more real interest (~Rs 251 in this sample); that cost IS
+the price of the credit-score trade-off, not a modeling failure.
+
+**Decision**: `impact.py` reports what the simulation actually produces,
+including these two "adjusted costs slightly more" results, with both
+mechanisms documented in the module docstring and encoded as permanent,
+explained regression tests
+(`test_fee_driven_divergence_can_leave_adjusted_order_net_costlier`,
+`test_utilisation_heuristic_divergence_trades_a_small_net_cost_for_score_
+protection`) rather than silently asserting "adjusted always wins."
+
+**Rejected alternative**: changing SEQUENCE's ranking formula to force
+fee/heuristic-driven orderings to also minimize `net_cost` (e.g. by
+converting the foreclosure charge into some kind of continuous-rate
+equivalent, or dropping the utilisation override when it doesn't pay for
+itself). Rejected for two reasons: SEQUENCE's current design was already
+reviewed and checkpointed with specific, tested orderings for all seven
+samples, and revising it now without being asked would relitigate settled
+work; and more fundamentally, the utilisation heuristic was never supposed
+to be judged by `net_cost` at all -- it optimizes a different objective
+(credit-score risk), and forcing it to also win on rupees would hide the
+real trade-off a borrower is actually making instead of showing it to them.
+
 ## Git repo scoped to TrueOrder/ itself
 
 `Desktop` (the parent of `TrueOrder/`) is itself an unrelated, uncommitted

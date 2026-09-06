@@ -10,12 +10,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from adjust import adjust_portfolio
+from impact import compare_impact
 from schema import Portfolio
 from sequence import compute_ordering
 from synth.generator import generate_portfolio
 from synth.segments import SEGMENT_DESCRIPTIONS
 
 SEED = "trueorder-checkpoint-2026-09-06"
+MONTHLY_SURPLUS = 15_000.0
 SAMPLES_DIR = Path(__file__).parent / "samples"
 
 SAMPLE_FILES = {
@@ -58,6 +60,22 @@ def show_sample(segment: str, filename: str) -> None:
     print(f"  naive order    (stated APR desc):     {ordering.naive_order}")
     print(f"  adjusted order (effective cost desc): {ordering.adjusted_order}")
     print(f"  divergence points:                    {ordering.divergence_points}")
+
+    impact = compare_impact(portfolio, ordering, MONTHLY_SURPLUS)
+    print(f"  -- impact, {MONTHLY_SURPLUS:.0f}/month surplus, real waterfall --")
+    print(
+        f"  naive   : interest={impact.naive.total_interest_paid:>12,.2f}  "
+        f"fees={impact.naive.total_foreclosure_fees_paid:>8,.2f}  "
+        f"tax_benefit={impact.naive.total_tax_benefit_realized:>10,.2f}  "
+        f"net_cost={impact.naive.net_cost:>12,.2f}  months={impact.naive.months_to_payoff}"
+    )
+    print(
+        f"  adjusted: interest={impact.adjusted.total_interest_paid:>12,.2f}  "
+        f"fees={impact.adjusted.total_foreclosure_fees_paid:>8,.2f}  "
+        f"tax_benefit={impact.adjusted.total_tax_benefit_realized:>10,.2f}  "
+        f"net_cost={impact.adjusted.net_cost:>12,.2f}  months={impact.adjusted.months_to_payoff}"
+    )
+    print(f"  net_cost_delta (positive = adjusted cheaper): {impact.net_cost_delta:,.2f}")
     if ordering.divergence_points:
         print("  -- adjustment notes for diverging debts --")
         for debt_id in ordering.divergence_points:

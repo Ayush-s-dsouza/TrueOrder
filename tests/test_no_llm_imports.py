@@ -26,6 +26,7 @@ CHECKED_MODULES = [
     "profile.py",
     "adjust.py",
     "sequence.py",
+    "impact.py",
 ]
 
 FORBIDDEN_IMPORT_ROOTS = {"anthropic", "sarvamai", "openai", "google"}

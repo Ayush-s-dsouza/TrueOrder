@@ -217,6 +217,35 @@ class RepaymentOrdering(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# IMPACT stage -- what a given repayment order actually costs, simulated
+# month by month rather than assumed. `net_cost` is the true economic
+# comparison this project is built around: nominal interest actually
+# accrued at the STATED rate (that's what a lender contractually charges,
+# regardless of any tax/fee adjustment used for ranking), plus one-time
+# foreclosure fees actually triggered, minus tax benefit actually realized
+# year by year while the debt remains outstanding.
+# ---------------------------------------------------------------------------
+
+
+class ImpactResult(BaseModel):
+    total_interest_paid: float
+    total_foreclosure_fees_paid: float
+    total_tax_benefit_realized: float
+    net_cost: float
+    months_to_payoff: int
+
+
+class ImpactComparison(BaseModel):
+    """`net_cost_delta` is naive.net_cost - adjusted.net_cost: positive
+    means the adjusted order is cheaper in real rupees, not just
+    differently ranked."""
+
+    naive: ImpactResult
+    adjusted: ImpactResult
+    net_cost_delta: float
+
+
+# ---------------------------------------------------------------------------
 # Schema-pinned disclaimers -- a Literal[CONSTANT_STRING] field makes these
 # impossible to omit or reword without failing validation, the same
 # guarantee Prequal used for its calibration disclaimer.
