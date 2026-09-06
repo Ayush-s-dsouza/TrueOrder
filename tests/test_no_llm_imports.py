@@ -16,9 +16,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 
-# explain.py (the eventual LLM-calling module) does not exist yet this
-# phase -- it is intentionally absent from this list, and the "exists"
-# guard below lets this test suite run before it's built.
+# explain.py is deliberately absent from this list -- it is the ONE module
+# allowed to import an LLM SDK. See
+# test_explain_itself_is_the_only_file_allowed_to_import_an_llm_sdk below,
+# which exists specifically so this list can't quietly exclude the one file
+# that's SUPPOSED to import one, leaving this whole check testing nothing.
 CHECKED_MODULES = [
     "schema.py",
     "tax_rules.py",
@@ -55,3 +57,13 @@ def test_no_deterministic_core_module_imports_an_llm_sdk():
         if found:
             violations[filename] = found
     assert violations == {}, f"forbidden imports found: {violations}"
+
+
+def test_explain_itself_is_the_only_file_allowed_to_import_an_llm_sdk():
+    """Confirms the checked-module list isn't accidentally excluding the
+    one file that's SUPPOSED to import an LLM SDK -- a check with no
+    positive case could pass by testing nothing. Ported from Prequal's
+    equivalent canary for author_criterion.py."""
+    path = ROOT / "explain.py"
+    assert path.exists()
+    assert "sarvamai" in _imported_roots(path)
