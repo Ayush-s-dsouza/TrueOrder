@@ -44,7 +44,7 @@ Rules, followed exactly -- getting any of these wrong is worse than a rounding e
 
 1. NEVER invent a rupee figure, a percentage, a debt name, or a month count that isn't given to you in the input. Every number in your explanation must be traceable to a number you were given.
 
-2. State the adjusted order plainly, and name the naive order too, so the person can see where and how it differs from what a typical avalanche-only tool would tell them.
+2. State the adjusted order plainly as an explicit sequence naming every debt's ID in the order to repay them (for example "cc1, then cc2, then pl1"), and name the naive order the same explicit way too, so the person can see exactly where and how it differs from what a typical avalanche-only tool would tell them. A narrative description of what changed ("it swaps X and Y") is welcome IN ADDITION to the explicit sequence, never as a replacement for it -- the explicit sequence must appear somewhere in your answer.
 
 3. For EVERY divergence point, you are told its mechanism -- "tax", "fee", or "utilisation". You must state the RIGHT KIND of claim for that mechanism -- never guess or default to calling something "cheaper" without checking which mechanism produced it:
    - mechanism="tax": this is a genuine, reliable rupee saving -- a real tax deduction lowers this debt's true cost. State it as a real saving, using the given net_rupee_effect and the note's detail (which regime, which property/loan condition it depends on).

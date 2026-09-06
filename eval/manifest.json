@@ -1,0 +1,2066 @@
+[
+  {
+    "case_id": "agreement_case_000",
+    "segment": "agreement_case",
+    "index": 0,
+    "portfolio": {
+      "borrower_id": "agreement_case_000",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 82257.51,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 32.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 38483.63,
+          "stated_apr_pct": 38.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 16.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 200274.33,
+          "stated_apr_pct": 14.0,
+          "remaining_tenure_months": 36,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "tune"
+  },
+  {
+    "case_id": "agreement_case_001",
+    "segment": "agreement_case",
+    "index": 1,
+    "portfolio": {
+      "borrower_id": "agreement_case_001",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 82948.83,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 32.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 39354.26,
+          "stated_apr_pct": 38.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 16.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 191692.86,
+          "stated_apr_pct": 14.0,
+          "remaining_tenure_months": 36,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "validation"
+  },
+  {
+    "case_id": "agreement_case_002",
+    "segment": "agreement_case",
+    "index": 2,
+    "portfolio": {
+      "borrower_id": "agreement_case_002",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 76078.63,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 32.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 40755.19,
+          "stated_apr_pct": 38.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 16.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 194234.52,
+          "stated_apr_pct": 14.0,
+          "remaining_tenure_months": 36,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "test"
+  },
+  {
+    "case_id": "agreement_case_003",
+    "segment": "agreement_case",
+    "index": 3,
+    "portfolio": {
+      "borrower_id": "agreement_case_003",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 81711.1,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 32.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 40973.85,
+          "stated_apr_pct": 38.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 16.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 201851.15,
+          "stated_apr_pct": 14.0,
+          "remaining_tenure_months": 36,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "tune"
+  },
+  {
+    "case_id": "agreement_case_004",
+    "segment": "agreement_case",
+    "index": 4,
+    "portfolio": {
+      "borrower_id": "agreement_case_004",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 82574.09,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 32.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 38760.08,
+          "stated_apr_pct": 38.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 16.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 195036.91,
+          "stated_apr_pct": 14.0,
+          "remaining_tenure_months": 36,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "validation"
+  },
+  {
+    "case_id": "agreement_case_005",
+    "segment": "agreement_case",
+    "index": 5,
+    "portfolio": {
+      "borrower_id": "agreement_case_005",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 82543.5,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 32.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 38558.24,
+          "stated_apr_pct": 38.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 16.0,
+          "aggregate_utilisation_pct": 25.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 200122.99,
+          "stated_apr_pct": 14.0,
+          "remaining_tenure_months": 36,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "test"
+  },
+  {
+    "case_id": "letout_home_old_regime_000",
+    "segment": "letout_home_old_regime",
+    "index": 0,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_000",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 59502.48,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 241880.4,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 4054940.13,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 45000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 350000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 5423.198711011559,
+    "split": "tune"
+  },
+  {
+    "case_id": "letout_home_old_regime_001",
+    "segment": "letout_home_old_regime",
+    "index": 1,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_001",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 59812.8,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 241651.3,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 4075090.88,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 45000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 350000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 5567.284524430288,
+    "split": "validation"
+  },
+  {
+    "case_id": "letout_home_old_regime_002",
+    "segment": "letout_home_old_regime",
+    "index": 2,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_002",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 60372.63,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 261578.56,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 4007966.23,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 45000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 350000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 6681.904509259621,
+    "split": "test"
+  },
+  {
+    "case_id": "letout_home_old_regime_003",
+    "segment": "letout_home_old_regime",
+    "index": 3,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_003",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 61745.46,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 258472.5,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 4110506.62,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 45000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 350000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 8593.121642625425,
+    "split": "tune"
+  },
+  {
+    "case_id": "letout_home_old_regime_004",
+    "segment": "letout_home_old_regime",
+    "index": 4,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_004",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 61724.22,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 245588.12,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 3916051.49,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 45000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 350000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 4978.228076127125,
+    "split": "validation"
+  },
+  {
+    "case_id": "letout_home_old_regime_005",
+    "segment": "letout_home_old_regime",
+    "index": 5,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_005",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 58794.32,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 241565.53,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 4033113.99,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 45000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 350000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 5623.148940510582,
+    "split": "test"
+  },
+  {
+    "case_id": "fixed_auto_foreclosure_000",
+    "segment": "fixed_auto_foreclosure",
+    "index": 0,
+    "portfolio": {
+      "borrower_id": "fixed_auto_foreclosure_000",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 48742.17,
+          "stated_apr_pct": 40.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 285976.95,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 12000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "fixed",
+          "foreclosure_charge_pct": 4.0,
+          "debt_id": "a1",
+          "outstanding_balance": 387699.8,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 18,
+          "minimum_payment": 24000.0,
+          "debt_type": "auto_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "fee"
+    ],
+    "net_cost_delta": -848.5881821041476,
+    "split": "test"
+  },
+  {
+    "case_id": "fixed_auto_foreclosure_001",
+    "segment": "fixed_auto_foreclosure",
+    "index": 1,
+    "portfolio": {
+      "borrower_id": "fixed_auto_foreclosure_001",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 50992.22,
+          "stated_apr_pct": 40.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 293355.36,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 12000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "fixed",
+          "foreclosure_charge_pct": 4.0,
+          "debt_id": "a1",
+          "outstanding_balance": 385083.67,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 18,
+          "minimum_payment": 24000.0,
+          "debt_type": "auto_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "fee"
+    ],
+    "net_cost_delta": -949.6645457875056,
+    "split": "tune"
+  },
+  {
+    "case_id": "fixed_auto_foreclosure_002",
+    "segment": "fixed_auto_foreclosure",
+    "index": 2,
+    "portfolio": {
+      "borrower_id": "fixed_auto_foreclosure_002",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 49077.78,
+          "stated_apr_pct": 40.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 314572.7,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 12000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "fixed",
+          "foreclosure_charge_pct": 4.0,
+          "debt_id": "a1",
+          "outstanding_balance": 394618.78,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 18,
+          "minimum_payment": 24000.0,
+          "debt_type": "auto_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "fee"
+    ],
+    "net_cost_delta": -1914.1208845897418,
+    "split": "validation"
+  },
+  {
+    "case_id": "fixed_auto_foreclosure_003",
+    "segment": "fixed_auto_foreclosure",
+    "index": 3,
+    "portfolio": {
+      "borrower_id": "fixed_auto_foreclosure_003",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 52148.86,
+          "stated_apr_pct": 40.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 293427.08,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 12000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "fixed",
+          "foreclosure_charge_pct": 4.0,
+          "debt_id": "a1",
+          "outstanding_balance": 416104.66,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 18,
+          "minimum_payment": 24000.0,
+          "debt_type": "auto_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "fee"
+    ],
+    "net_cost_delta": -2657.525056231192,
+    "split": "test"
+  },
+  {
+    "case_id": "fixed_auto_foreclosure_004",
+    "segment": "fixed_auto_foreclosure",
+    "index": 4,
+    "portfolio": {
+      "borrower_id": "fixed_auto_foreclosure_004",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 48328.78,
+          "stated_apr_pct": 40.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 304601.16,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 12000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "fixed",
+          "foreclosure_charge_pct": 4.0,
+          "debt_id": "a1",
+          "outstanding_balance": 380261.86,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 18,
+          "minimum_payment": 24000.0,
+          "debt_type": "auto_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "fee"
+    ],
+    "net_cost_delta": -1559.3543952685504,
+    "split": "tune"
+  },
+  {
+    "case_id": "fixed_auto_foreclosure_005",
+    "segment": "fixed_auto_foreclosure",
+    "index": 5,
+    "portfolio": {
+      "borrower_id": "fixed_auto_foreclosure_005",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 49896.21,
+          "stated_apr_pct": 40.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 308994.43,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 12000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "fixed",
+          "foreclosure_charge_pct": 4.0,
+          "debt_id": "a1",
+          "outstanding_balance": 392544.52,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 18,
+          "minimum_payment": 24000.0,
+          "debt_type": "auto_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "fee"
+    ],
+    "net_cost_delta": -1891.0754832444873,
+    "split": "validation"
+  },
+  {
+    "case_id": "utilisation_threshold_000",
+    "segment": "utilisation_threshold",
+    "index": 0,
+    "portfolio": {
+      "borrower_id": "utilisation_threshold_000",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 87711.38,
+          "stated_apr_pct": 36.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 60.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 28640.99,
+          "stated_apr_pct": 30.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 1500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 15.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 207085.06,
+          "stated_apr_pct": 32.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 10000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "utilisation"
+    ],
+    "net_cost_delta": -254.42350147413526,
+    "split": "tune"
+  },
+  {
+    "case_id": "utilisation_threshold_001",
+    "segment": "utilisation_threshold",
+    "index": 1,
+    "portfolio": {
+      "borrower_id": "utilisation_threshold_001",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 86394.57,
+          "stated_apr_pct": 36.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 60.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 31093.79,
+          "stated_apr_pct": 30.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 1500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 15.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 209932.6,
+          "stated_apr_pct": 32.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 10000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "utilisation"
+    ],
+    "net_cost_delta": -297.107616051253,
+    "split": "validation"
+  },
+  {
+    "case_id": "utilisation_threshold_002",
+    "segment": "utilisation_threshold",
+    "index": 2,
+    "portfolio": {
+      "borrower_id": "utilisation_threshold_002",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 91300.43,
+          "stated_apr_pct": 36.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 60.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 30035.75,
+          "stated_apr_pct": 30.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 1500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 15.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 194200.48,
+          "stated_apr_pct": 32.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 10000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "utilisation"
+    ],
+    "net_cost_delta": -240.1144999816388,
+    "split": "test"
+  },
+  {
+    "case_id": "utilisation_threshold_003",
+    "segment": "utilisation_threshold",
+    "index": 3,
+    "portfolio": {
+      "borrower_id": "utilisation_threshold_003",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 87301.47,
+          "stated_apr_pct": 36.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 60.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 31322.62,
+          "stated_apr_pct": 30.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 1500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 15.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 201934.12,
+          "stated_apr_pct": 32.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 10000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "utilisation"
+    ],
+    "net_cost_delta": -279.8129803111151,
+    "split": "tune"
+  },
+  {
+    "case_id": "utilisation_threshold_004",
+    "segment": "utilisation_threshold",
+    "index": 4,
+    "portfolio": {
+      "borrower_id": "utilisation_threshold_004",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 93818.71,
+          "stated_apr_pct": 36.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 60.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 30060.49,
+          "stated_apr_pct": 30.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 1500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 15.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 192615.36,
+          "stated_apr_pct": 32.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 10000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "utilisation"
+    ],
+    "net_cost_delta": -236.82561346836155,
+    "split": "tune"
+  },
+  {
+    "case_id": "utilisation_threshold_005",
+    "segment": "utilisation_threshold",
+    "index": 5,
+    "portfolio": {
+      "borrower_id": "utilisation_threshold_005",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 85650.74,
+          "stated_apr_pct": 36.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 4500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 60.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "debt_id": "cc2",
+          "outstanding_balance": 30152.87,
+          "stated_apr_pct": 30.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 1500.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 15.0,
+          "aggregate_utilisation_pct": 34.29
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 202927.08,
+          "stated_apr_pct": 32.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 10000.0,
+          "debt_type": "personal_loan"
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "utilisation"
+    ],
+    "net_cost_delta": -270.1149233527758,
+    "split": "validation"
+  },
+  {
+    "case_id": "selfoccupied_new_regime_regression_000",
+    "segment": "selfoccupied_new_regime_regression",
+    "index": 0,
+    "portfolio": {
+      "borrower_id": "selfoccupied_new_regime_regression_000",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 59887.6,
+          "stated_apr_pct": 41.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 195850.41,
+          "stated_apr_pct": 13.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 9500.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 3627754.11,
+          "stated_apr_pct": 8.5,
+          "remaining_tenure_months": 200,
+          "minimum_payment": 32000.0,
+          "debt_type": "home_loan",
+          "occupancy": "self_occupied",
+          "annual_rental_income": null
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "test"
+  },
+  {
+    "case_id": "selfoccupied_new_regime_regression_001",
+    "segment": "selfoccupied_new_regime_regression",
+    "index": 1,
+    "portfolio": {
+      "borrower_id": "selfoccupied_new_regime_regression_001",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 57240.23,
+          "stated_apr_pct": 41.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 195679.95,
+          "stated_apr_pct": 13.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 9500.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 3510178.78,
+          "stated_apr_pct": 8.5,
+          "remaining_tenure_months": 200,
+          "minimum_payment": 32000.0,
+          "debt_type": "home_loan",
+          "occupancy": "self_occupied",
+          "annual_rental_income": null
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "tune"
+  },
+  {
+    "case_id": "selfoccupied_new_regime_regression_002",
+    "segment": "selfoccupied_new_regime_regression",
+    "index": 2,
+    "portfolio": {
+      "borrower_id": "selfoccupied_new_regime_regression_002",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 62399.46,
+          "stated_apr_pct": 41.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 204399.54,
+          "stated_apr_pct": 13.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 9500.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 3444704.86,
+          "stated_apr_pct": 8.5,
+          "remaining_tenure_months": 200,
+          "minimum_payment": 32000.0,
+          "debt_type": "home_loan",
+          "occupancy": "self_occupied",
+          "annual_rental_income": null
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "validation"
+  },
+  {
+    "case_id": "selfoccupied_new_regime_regression_003",
+    "segment": "selfoccupied_new_regime_regression",
+    "index": 3,
+    "portfolio": {
+      "borrower_id": "selfoccupied_new_regime_regression_003",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 61280.32,
+          "stated_apr_pct": 41.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 191073.02,
+          "stated_apr_pct": 13.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 9500.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 3369982.2,
+          "stated_apr_pct": 8.5,
+          "remaining_tenure_months": 200,
+          "minimum_payment": 32000.0,
+          "debt_type": "home_loan",
+          "occupancy": "self_occupied",
+          "annual_rental_income": null
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "test"
+  },
+  {
+    "case_id": "selfoccupied_new_regime_regression_004",
+    "segment": "selfoccupied_new_regime_regression",
+    "index": 4,
+    "portfolio": {
+      "borrower_id": "selfoccupied_new_regime_regression_004",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 57150.53,
+          "stated_apr_pct": 41.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 206454.89,
+          "stated_apr_pct": 13.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 9500.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 3329594.17,
+          "stated_apr_pct": 8.5,
+          "remaining_tenure_months": 200,
+          "minimum_payment": 32000.0,
+          "debt_type": "home_loan",
+          "occupancy": "self_occupied",
+          "annual_rental_income": null
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "tune"
+  },
+  {
+    "case_id": "selfoccupied_new_regime_regression_005",
+    "segment": "selfoccupied_new_regime_regression",
+    "index": 5,
+    "portfolio": {
+      "borrower_id": "selfoccupied_new_regime_regression_005",
+      "tax_regime": "new",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 59462.17,
+          "stated_apr_pct": 41.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 202934.52,
+          "stated_apr_pct": 13.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 9500.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 3561002.09,
+          "stated_apr_pct": 8.5,
+          "remaining_tenure_months": 200,
+          "minimum_payment": 32000.0,
+          "debt_type": "home_loan",
+          "occupancy": "self_occupied",
+          "annual_rental_income": null
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": false,
+    "mechanisms": [],
+    "net_cost_delta": 0.0,
+    "split": "tune"
+  },
+  {
+    "case_id": "education_loan_80e_old_regime_000",
+    "segment": "education_loan_80e_old_regime",
+    "index": 0,
+    "portfolio": {
+      "borrower_id": "education_loan_80e_old_regime_000",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 40126.42,
+          "stated_apr_pct": 39.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 144146.89,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "debt_id": "e1",
+          "outstanding_balance": 629978.66,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 72,
+          "minimum_payment": 9000.0,
+          "debt_type": "education_loan",
+          "years_since_first_repayment": 2
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 85.20167310882243,
+    "split": "validation"
+  },
+  {
+    "case_id": "education_loan_80e_old_regime_001",
+    "segment": "education_loan_80e_old_regime",
+    "index": 1,
+    "portfolio": {
+      "borrower_id": "education_loan_80e_old_regime_001",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 41988.55,
+          "stated_apr_pct": 39.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 149459.1,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "debt_id": "e1",
+          "outstanding_balance": 613672.25,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 72,
+          "minimum_payment": 9000.0,
+          "debt_type": "education_loan",
+          "years_since_first_repayment": 2
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 1057.495354278275,
+    "split": "test"
+  },
+  {
+    "case_id": "education_loan_80e_old_regime_002",
+    "segment": "education_loan_80e_old_regime",
+    "index": 2,
+    "portfolio": {
+      "borrower_id": "education_loan_80e_old_regime_002",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 39451.53,
+          "stated_apr_pct": 39.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 148124.07,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "debt_id": "e1",
+          "outstanding_balance": 584917.64,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 72,
+          "minimum_payment": 9000.0,
+          "debt_type": "education_loan",
+          "years_since_first_repayment": 2
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 676.2538872624864,
+    "split": "tune"
+  },
+  {
+    "case_id": "education_loan_80e_old_regime_003",
+    "segment": "education_loan_80e_old_regime",
+    "index": 3,
+    "portfolio": {
+      "borrower_id": "education_loan_80e_old_regime_003",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 41207.15,
+          "stated_apr_pct": 39.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 146329.06,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "debt_id": "e1",
+          "outstanding_balance": 617409.81,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 72,
+          "minimum_payment": 9000.0,
+          "debt_type": "education_loan",
+          "years_since_first_repayment": 2
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 537.8363738866465,
+    "split": "validation"
+  },
+  {
+    "case_id": "education_loan_80e_old_regime_004",
+    "segment": "education_loan_80e_old_regime",
+    "index": 4,
+    "portfolio": {
+      "borrower_id": "education_loan_80e_old_regime_004",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 40040.44,
+          "stated_apr_pct": 39.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 146924.91,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "debt_id": "e1",
+          "outstanding_balance": 579777.43,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 72,
+          "minimum_payment": 9000.0,
+          "debt_type": "education_loan",
+          "years_since_first_repayment": 2
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 473.509831386109,
+    "split": "test"
+  },
+  {
+    "case_id": "education_loan_80e_old_regime_005",
+    "segment": "education_loan_80e_old_regime",
+    "index": 5,
+    "portfolio": {
+      "borrower_id": "education_loan_80e_old_regime_005",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 40165.05,
+          "stated_apr_pct": 39.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 2000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 20.0,
+          "aggregate_utilisation_pct": 20.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 152216.26,
+          "stated_apr_pct": 9.0,
+          "remaining_tenure_months": 24,
+          "minimum_payment": 7000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "debt_id": "e1",
+          "outstanding_balance": 627619.45,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 72,
+          "minimum_payment": 9000.0,
+          "debt_type": "education_loan",
+          "years_since_first_repayment": 2
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 1021.1609171593009,
+    "split": "tune"
+  },
+  {
+    "case_id": "letout_home_old_regime_loss_capped_000",
+    "segment": "letout_home_old_regime_loss_capped",
+    "index": 0,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_loss_capped_000",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 61972.85,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 245905.96,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 8085642.78,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 85000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 100000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": -79.74562983680516,
+    "split": "validation"
+  },
+  {
+    "case_id": "letout_home_old_regime_loss_capped_001",
+    "segment": "letout_home_old_regime_loss_capped",
+    "index": 1,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_loss_capped_001",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 59583.37,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 260160.98,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 7702714.5,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 85000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 100000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 2283.2454574638978,
+    "split": "test"
+  },
+  {
+    "case_id": "letout_home_old_regime_loss_capped_002",
+    "segment": "letout_home_old_regime_loss_capped",
+    "index": 2,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_loss_capped_002",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 61531.65,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 244429.42,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 7626629.3,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 85000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 100000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": -1417.9328598449938,
+    "split": "tune"
+  },
+  {
+    "case_id": "letout_home_old_regime_loss_capped_003",
+    "segment": "letout_home_old_regime_loss_capped",
+    "index": 3,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_loss_capped_003",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 62821.98,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 261019.72,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 8038989.44,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 85000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 100000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 1487.4488886436448,
+    "split": "validation"
+  },
+  {
+    "case_id": "letout_home_old_regime_loss_capped_004",
+    "segment": "letout_home_old_regime_loss_capped",
+    "index": 4,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_loss_capped_004",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 61051.46,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 239619.66,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 7851190.16,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 85000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 100000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": 3552.5962955681607,
+    "split": "test"
+  },
+  {
+    "case_id": "letout_home_old_regime_loss_capped_005",
+    "segment": "letout_home_old_regime_loss_capped",
+    "index": 5,
+    "portfolio": {
+      "borrower_id": "letout_home_old_regime_loss_capped_005",
+      "tax_regime": "old",
+      "marginal_tax_rate_pct": 30.0,
+      "debts": [
+        {
+          "debt_id": "cc1",
+          "outstanding_balance": 57461.94,
+          "stated_apr_pct": 42.0,
+          "remaining_tenure_months": 360,
+          "minimum_payment": 3000.0,
+          "debt_type": "credit_card",
+          "current_utilisation_pct": 22.0,
+          "aggregate_utilisation_pct": 22.0
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "pl1",
+          "outstanding_balance": 242359.11,
+          "stated_apr_pct": 10.5,
+          "remaining_tenure_months": 30,
+          "minimum_payment": 9000.0,
+          "debt_type": "personal_loan"
+        },
+        {
+          "rate_type": "floating",
+          "foreclosure_charge_pct": null,
+          "debt_id": "h1",
+          "outstanding_balance": 8030524.1,
+          "stated_apr_pct": 11.0,
+          "remaining_tenure_months": 180,
+          "minimum_payment": 85000.0,
+          "debt_type": "home_loan",
+          "occupancy": "let_out",
+          "annual_rental_income": 100000.0
+        }
+      ]
+    },
+    "monthly_surplus": 15000.0,
+    "has_divergence": true,
+    "mechanisms": [
+      "tax"
+    ],
+    "net_cost_delta": -587.635876624845,
+    "split": "tune"
+  }
+]

@@ -388,3 +388,132 @@ own independent history, matching Prequal's own git-scoping decision.
 **Rejected alternative**: none considered -- committing TrueOrder as part
 of the `Desktop` repo's history was never viable given that repo's
 unrelated, pre-existing untracked contents.
+
+## explain.py uses Sarvam, not Claude, per explicit user choice
+
+Before writing explain.py, the model/provider question was put to the
+user directly (a real cost decision, since the eval calls it dozens of
+times per run) with Claude Sonnet 5/Opus 5/Haiku 4.5 as the offered
+options. The user's actual answer named Sarvam instead, along with a live
+API key pasted directly into the conversation.
+
+**Decision**: `explain.py` is built exactly on Prequal's
+`author_criterion.py` pattern -- `ExplanationProvider` Protocol,
+`SarvamProvider` as the sole implementation, `sarvam-105b` as the model
+(same as Prequal, same verified pricing). The pasted key was written
+immediately to a `.env` file (confirmed gitignored before anything else
+touched the repo) and is read only via `os.environ["SARVAM_API_KEY"]` --
+never hardcoded, never echoed in any output or commit.
+
+**Rejected alternative**: defaulting to Claude Opus 5 per this session's
+own tooling default. Rejected because the user's answer is what it is --
+an explicit instruction overrides a tool's default recommendation, and
+Sarvam also matches this project line's established precedent (Prequal).
+
+## sarvam-105b's real latency and reasoning-token cost, discovered by running it, not assumed
+
+Prequal's author_criterion.py documented sarvam-105b as a reasoning model
+whose chain-of-thought counts against the same token budget as the final
+answer, with `max_tokens=4096` as its own working value for a short
+JSON-extraction task. explain.py's task is a longer, six-rule,
+per-mechanism-framing prose generation -- a materially different
+reasoning load -- and assuming the same 4096 budget would carry over
+untested was exactly the kind of assumption this project's whole research
+phase has been built around not making.
+
+Verified directly: at `max_tokens=4096` and even `8000`, real calls
+returned `finish_reason="length"` with `message.content=None` -- the
+model spent the entire budget on chain-of-thought (27,208 characters of
+`reasoning_content` at the 8000-token attempt) and never reached a final
+answer. A real call only succeeded at `max_tokens=20000` (8,712 completion
+tokens for a two-divergence-point case). Separately, the client's default
+read timeout was too short for this latency profile -- one call timed out
+outright during eval smoke-testing (a `ConnectTimeout`, not an API error)
+even after the `max_tokens` fix.
+
+**Decision**: `max_tokens=32_000` (well above the observed 8,712-token
+figure, for headroom on portfolios with more divergence points), and an
+explicit `timeout=180.0` on the `SarvamAI` client. Both are documented in
+`explain.py` with the actual observed numbers, not a round guess.
+
+**Rejected alternative**: copying Prequal's `max_tokens=4096` on the
+assumption that "it's the same model, so the same budget should hold" --
+disproven directly by running it, in well under the time it would have
+taken to debate the assumption.
+
+## The debt-ID and explicit-sequence prompt rules exist for the eval, and for real users
+
+Two SYSTEM_PROMPT rules were added specifically because real collected
+transcripts, not hypotheticals, showed correct explanations that were
+nonetheless unverifiable by the eval's text heuristics:
+
+1. The model naturally described debts by type ("your home loan") rather
+   than by `debt_id`, correct and readable, but leaving nothing for a
+   metric to anchor a per-debt check on.
+2. On one case, the model described a reordering as a narrative ("keeps
+   cc1 on top, but swaps pl1 and cc2") without ever listing the full
+   adjusted sequence explicitly -- also correct, but not something a
+   sequence-matching check could verify.
+
+**Decision**: added a rule requiring each debt's ID in parentheses on
+first mention, and a rule requiring the full order to appear somewhere as
+an explicit sequence (in addition to, not instead of, any narrative
+description). Both were re-verified against real calls before being
+trusted. Both also have a genuine product justification independent of
+the eval: a debt ID lets a reader cross-reference their own statements,
+and an explicit sequence gives an unambiguous bottom line a narrative
+alone doesn't -- these are prompt improvements the eval's needs happened
+to surface, not eval-gaming.
+
+**Rejected alternative**: building fuzzier NLP (e.g. detecting "swap"
+narratives and resolving them into an implied sequence) to grade the
+original, unconstrained prose instead of constraining the prose. Rejected
+because it would have added real complexity to correctly interpret
+language the model wasn't even asked to make checkable, when asking it
+directly was simpler, more robust, and improved the product too.
+
+## Three real bugs found and fixed in eval/metrics.py's own heuristics, before trusting any faithfulness number
+
+Building the eval surfaced three false positives in the metrics
+themselves, each found by comparing a metric's verdict against a real
+collected explanation whose correctness had already been manually
+verified -- the same discipline as tax_rules.py's and impact.py's earlier
+bug hunts, applied to the eval's own code this time:
+
+1. **Sign-insensitive number matching.** A `net_cost_delta` of -949.66 was
+   correctly restated in prose as "the adjusted order costs Rs 949.66
+   more" (a natural, correct sign flip for that phrasing) -- flagged as an
+   invented number by a signed-value comparison. Fixed: `_numbers_match`
+   now compares `abs(a)` against `abs(b)`.
+2. **Negation-blind tax-claim detection.** "There are no tax deductions"
+   matched the false-tax-claim pattern on its "tax deduction" substring
+   and was flagged as a fabricated benefit -- exactly backwards, since the
+   sentence correctly DENIES one applies. Fixed: `_is_negated` checks for
+   a denial cue ("no", "not", "does not", ...) within 40 characters before
+   any match before counting it as a violation.
+3. **Order-checking anchored on each debt's first occurrence ANYWHERE in
+   the text.** Since naive order is conventionally stated first in prose,
+   this silently verified the NAIVE sequence instead of the adjusted one
+   whenever they shared a debt at different positions -- caught because a
+   genuinely correct explanation scored `order_correct=False`. A marker-
+   phrase anchor ("adjusted order") was tried next and also failed: real
+   text used "adjusted plan", or led with the recommendation before any
+   label at all. Fixed: `adjusted_order_sequence_correct` now searches for
+   the adjusted sequence's exact debt-ID pattern as a tight, contiguous run
+   anywhere in the text, independent of any label phrase.
+
+**Decision**: all three are permanent regression tests in
+`tests/test_eval_metrics.py`, using literal text fixtures (no API calls
+needed) reproducing each real failure shape. `eval/metrics.py`'s own
+docstrings document each heuristic as necessary-but-not-sufficient where
+that's true (e.g. `utilisation_correctly_framed` proves the right
+vocabulary appears, not that no contradicting claim exists elsewhere).
+
+**Rejected alternative**: trusting the first faithfulness numbers the
+metrics produced (a 0% headline rate on the first smoke-test batch)
+instead of investigating why they contradicted the manually-verified
+quality of the same explanations. A metric that disagrees with a
+independently-confirmed ground truth is a bug report about the metric,
+not a bug report about the thing being measured -- treating it as the
+latter would have meant shipping a faithfulness eval that was itself
+unfaithful.
