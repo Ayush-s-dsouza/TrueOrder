@@ -1,0 +1,37 @@
+{
+  "borrower_id": "utilisation_threshold_000",
+  "tax_regime": "old",
+  "marginal_tax_rate_pct": 30.0,
+  "debts": [
+    {
+      "debt_id": "cc1",
+      "outstanding_balance": 91080.66,
+      "stated_apr_pct": 36.0,
+      "remaining_tenure_months": 360,
+      "minimum_payment": 4500.0,
+      "debt_type": "credit_card",
+      "current_utilisation_pct": 60.0,
+      "aggregate_utilisation_pct": 34.29
+    },
+    {
+      "debt_id": "cc2",
+      "outstanding_balance": 30409.41,
+      "stated_apr_pct": 30.0,
+      "remaining_tenure_months": 360,
+      "minimum_payment": 1500.0,
+      "debt_type": "credit_card",
+      "current_utilisation_pct": 15.0,
+      "aggregate_utilisation_pct": 34.29
+    },
+    {
+      "rate_type": "floating",
+      "foreclosure_charge_pct": null,
+      "debt_id": "pl1",
+      "outstanding_balance": 196974.08,
+      "stated_apr_pct": 32.0,
+      "remaining_tenure_months": 24,
+      "minimum_payment": 10000.0,
+      "debt_type": "personal_loan"
+    }
+  ]
+}

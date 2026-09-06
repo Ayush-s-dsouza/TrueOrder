@@ -1,0 +1,37 @@
+{
+  "borrower_id": "agreement_case_000",
+  "tax_regime": "old",
+  "marginal_tax_rate_pct": 30.0,
+  "debts": [
+    {
+      "debt_id": "cc1",
+      "outstanding_balance": 77372.04,
+      "stated_apr_pct": 42.0,
+      "remaining_tenure_months": 360,
+      "minimum_payment": 4000.0,
+      "debt_type": "credit_card",
+      "current_utilisation_pct": 32.0,
+      "aggregate_utilisation_pct": 25.0
+    },
+    {
+      "debt_id": "cc2",
+      "outstanding_balance": 41925.04,
+      "stated_apr_pct": 38.0,
+      "remaining_tenure_months": 360,
+      "minimum_payment": 2000.0,
+      "debt_type": "credit_card",
+      "current_utilisation_pct": 16.0,
+      "aggregate_utilisation_pct": 25.0
+    },
+    {
+      "rate_type": "floating",
+      "foreclosure_charge_pct": null,
+      "debt_id": "pl1",
+      "outstanding_balance": 208552.63,
+      "stated_apr_pct": 14.0,
+      "remaining_tenure_months": 36,
+      "minimum_payment": 7000.0,
+      "debt_type": "personal_loan"
+    }
+  ]
+}

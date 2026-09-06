@@ -1,0 +1,36 @@
+{
+  "borrower_id": "education_loan_80e_old_regime_000",
+  "tax_regime": "old",
+  "marginal_tax_rate_pct": 30.0,
+  "debts": [
+    {
+      "debt_id": "cc1",
+      "outstanding_balance": 41020.29,
+      "stated_apr_pct": 39.0,
+      "remaining_tenure_months": 360,
+      "minimum_payment": 2000.0,
+      "debt_type": "credit_card",
+      "current_utilisation_pct": 20.0,
+      "aggregate_utilisation_pct": 20.0
+    },
+    {
+      "rate_type": "floating",
+      "foreclosure_charge_pct": null,
+      "debt_id": "pl1",
+      "outstanding_balance": 150238.32,
+      "stated_apr_pct": 9.0,
+      "remaining_tenure_months": 24,
+      "minimum_payment": 7000.0,
+      "debt_type": "personal_loan"
+    },
+    {
+      "debt_id": "e1",
+      "outstanding_balance": 571698.9,
+      "stated_apr_pct": 11.0,
+      "remaining_tenure_months": 72,
+      "minimum_payment": 9000.0,
+      "debt_type": "education_loan",
+      "years_since_first_repayment": 2
+    }
+  ]
+}

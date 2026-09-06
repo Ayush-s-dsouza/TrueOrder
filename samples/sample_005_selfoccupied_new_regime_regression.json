@@ -1,0 +1,39 @@
+{
+  "borrower_id": "selfoccupied_new_regime_regression_000",
+  "tax_regime": "new",
+  "marginal_tax_rate_pct": 30.0,
+  "debts": [
+    {
+      "debt_id": "cc1",
+      "outstanding_balance": 60204.52,
+      "stated_apr_pct": 41.0,
+      "remaining_tenure_months": 360,
+      "minimum_payment": 3000.0,
+      "debt_type": "credit_card",
+      "current_utilisation_pct": 20.0,
+      "aggregate_utilisation_pct": 20.0
+    },
+    {
+      "rate_type": "floating",
+      "foreclosure_charge_pct": null,
+      "debt_id": "pl1",
+      "outstanding_balance": 202126.93,
+      "stated_apr_pct": 13.0,
+      "remaining_tenure_months": 24,
+      "minimum_payment": 9500.0,
+      "debt_type": "personal_loan"
+    },
+    {
+      "rate_type": "floating",
+      "foreclosure_charge_pct": null,
+      "debt_id": "h1",
+      "outstanding_balance": 3655854.81,
+      "stated_apr_pct": 8.5,
+      "remaining_tenure_months": 200,
+      "minimum_payment": 32000.0,
+      "debt_type": "home_loan",
+      "occupancy": "self_occupied",
+      "annual_rental_income": null
+    }
+  ]
+}
