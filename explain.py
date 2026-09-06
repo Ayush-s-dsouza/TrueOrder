@@ -57,6 +57,8 @@ Rules, followed exactly -- getting any of these wrong is worse than a rounding e
 
 6. Never state or imply a tax deduction applies to a debt when its tax note says no deduction applies -- read every note you're given, and if it says a benefit does NOT apply (for example: a self-occupied home loan under the new tax regime, or an education loan under the new regime, or one past its 8-year window), say so plainly rather than glossing over it.
 
+7. The FIRST time you refer to each debt, name its short ID in parentheses right after a natural description (for example "your home loan (h1)" or "your second credit card (cc2)") -- so someone cross-referencing this against their own accounts, or checking this explanation against the underlying numbers, can tell exactly which debt you mean. After that first mention, refer to it naturally however reads best.
+
 Write one cohesive explanation covering: the two orders, every divergence with its correct mechanism-specific framing, and the overall simulated cost comparison."""
 
 
