@@ -259,53 +259,106 @@ the resulting numbers were actively misleading (every divergence case
 looked like the adjusted order was worse, when for the tax cases it should
 provably not be).
 
-## The adjusted order is not always net-cost-cheaper -- verified, not assumed
+## "Adjusted = cheaper" was never a valid blanket claim -- the project's central finding
 
-After fixing the roll-forward bug above, the tax-driven divergence samples
+This is the single most important discovery in TrueOrder, and it changes
+how "adjusted" must be described everywhere: in schema field names,
+docstrings, and eventually the README and `explain.py`'s prose. It is not a
+footnote to the waterfall bug fix above -- it would have been true even if
+that bug had never existed.
+
+After fixing the roll-forward bug, the tax-driven divergence samples
 correctly showed the adjusted order as net-cheaper. The fee-driven sample
 (`fixed_auto_foreclosure`) and the utilisation-heuristic sample
 (`utilisation_threshold`) still showed the adjusted order as slightly net-
-COSTLIER. Rather than treating this as a second bug, it was traced by hand
-(instrumenting per-debt payoff months and pre-payoff balances the same way)
-to two distinct, genuine mechanisms, not an implementation error:
+COSTLIER. Tracing both by hand (instrumenting per-debt payoff months and
+pre-payoff balances) showed this was not a second bug -- it was proof that
+"the adjusted order" was always doing three structurally different things
+at once, silently merged into one ranking and one "cheaper/not cheaper"
+framing:
 
-For `fixed_auto_foreclosure`: `a1` (auto loan, 9% nominal) gets promoted
-above `pl1` (personal loan, 11% nominal) because `a1`'s foreclosure-charge-
-annualized ranking rate (11.67%) exceeds `pl1`'s stated rate. But a
-foreclosure charge is a ONE-TIME cost proportional to whatever balance
-remains at the moment of payoff -- it does not scale with "how long you
-delay" the way a continuous tax-shield rate does. Delaying `pl1` (the
-genuinely higher-NOMINAL-rate debt) to accelerate `a1` increases total
-nominal interest by more (~Rs 2,314 in this sample) than the one-time fee
-difference saves (~Rs 27) -- a real, mechanical consequence of blending a
-lump-sum cost into a rate-shaped ranking key, not a defect in the waterfall.
+1. **TAX** -- a verified deduction lowers a debt's true cost. The tax
+   benefit is a continuous, ongoing percentage of actual accrued interest,
+   the same "weighted balance over time" shape as the interest cost it
+   discounts -- so ranking by after-tax rate provably aligns with
+   minimizing net cost, and does in every tax-driven sample
+   (`letout_home_old_regime`, `education_loan_80e_old_regime`,
+   `letout_home_old_regime_loss_capped`). **Mechanically cheaper, always,
+   when it fires.**
+2. **FEE** -- a verified foreclosure charge raises a debt's true cost
+   above its stated rate. But the charge is a ONE-TIME cost proportional to
+   whatever balance remains at the moment of payoff, not a continuous rate
+   -- it does not scale with "how long you delay" the way a tax shield
+   does. In `fixed_auto_foreclosure`, promoting `a1` (9% nominal) ahead of
+   `pl1` (11% nominal, genuinely the more expensive debt) because `a1`'s
+   fee-annualized ranking number (11.67%) looks worse increases total
+   nominal interest by more (~Rs 2,314) than the one-time fee difference
+   saves (~Rs 27). **Correctly identifies a debt as more expensive than
+   naive assumes; can come out either cheaper or slightly costlier once
+   realized in a real waterfall.** This is a ranking justification, not a
+   savings guarantee.
+3. **UTILISATION** -- a heuristic override that protects a CIBIL score,
+   not rupees. In `utilisation_threshold`, `cc2`'s adjusted rate is
+   IDENTICAL to its stated rate (30%, no tax or fee adjustment at all); it
+   is promoted purely to cross the 30%-aggregate-utilisation threshold.
+   Promoting it ahead of `pl1` (genuinely 32% nominal) costs a little more
+   real interest (~Rs 251); that cost IS the price of the trade, not a
+   modeling failure. **Explicitly not a cost-savings claim of any kind.**
 
-For `utilisation_threshold`: `cc2`'s adjusted rate is IDENTICAL to its
-stated rate (30%, no tax or fee adjustment at all) -- it is promoted purely
-by the utilisation-crossing heuristic, which protects a CIBIL score, not
-rupees. Promoting it ahead of `pl1` (genuinely 32% nominal) necessarily
-costs a little more real interest (~Rs 251 in this sample); that cost IS
-the price of the credit-score trade-off, not a modeling failure.
+Stating a utilisation promotion as a "cost saving" -- or a fee promotion as
+an unconditional one -- is a category error about what kind of claim is
+being made, not a wrong number. That is a worse failure than any tax
+miscalculation, because a wrong number can be checked against the
+computed output; a category error can look completely plausible while
+answering a different question than the one asked. Since `explain.py`'s
+prose (built in a later phase) is the one place an LLM touches this
+project's output, and the eval measures whether that prose is faithful to
+what was computed, this distinction has to be correct and machine-checkable
+BEFORE `explain.py` or `eval/` exist -- otherwise the eval would be
+grading explanations against a ground truth that itself conflates three
+different kinds of claims.
 
-**Decision**: `impact.py` reports what the simulation actually produces,
-including these two "adjusted costs slightly more" results, with both
-mechanisms documented in the module docstring and encoded as permanent,
-explained regression tests
-(`test_fee_driven_divergence_can_leave_adjusted_order_net_costlier`,
-`test_utilisation_heuristic_divergence_trades_a_small_net_cost_for_score_
-protection`) rather than silently asserting "adjusted always wins."
+**Decision**: `schema.py` adds `DivergenceMechanism` (`tax` / `fee` /
+`utilisation`) and `DivergenceRationale` (`mechanism`, `net_rupee_effect`,
+`traded_for`), and `RepaymentOrdering.divergence_rationale` requires
+exactly one entry per divergence point -- a divergence is never left as a
+bare rank change with no stated mechanism. `DivergenceRationale` itself
+enforces the asymmetry with a validator: `traded_for` is REQUIRED for
+`utilisation` (the one mechanism that must never let its non-rupee nature
+go unstated) and FORBIDDEN for `tax`/`fee` (which are rupee claims on their
+own and must not be diluted with a trade-off framing that doesn't apply to
+them). `sequence.py`'s `compute_divergence_rationale` attributes each
+divergent debt to its own mechanism when it has one, or -- for a debt that
+merely got passively displaced by a neighbor's promotion (most divergences
+in this project's samples: e.g. `pl1` in `letout_home_old_regime` has no
+adjustment of its own at all) -- borrows the mechanism of whichever other
+divergent debt actually caused the shift, keeping `net_rupee_effect` at
+0.0. A debt with more than one mechanism active at once (e.g. a
+hypothetical fixed-rate let-out home loan) raises rather than silently
+picking one, since guessing there would reintroduce the exact category-
+error risk this decision exists to eliminate.
+
+`impact.py` and its tests are unchanged in behavior but reframed in every
+docstring/name to match: `net_cost_delta > 0` is a REQUIRED regression for
+every tax-driven sample; `net_cost_delta`'s sign for the fee-driven sample
+is pinned as a verified fact about these specific numbers, not asserted as
+a general property of the fee mechanism (a comment says so explicitly, so
+a future change to adjust.py's fee formula or sample 3's numbers is a
+prompt to re-verify which way the trade-off goes, not to blindly flip the
+assertion); and `net_cost_delta` is explicitly documented as NOT the metric
+that judges the utilisation-driven sample's correctness at all -- its
+`DivergenceRationale.traded_for` is.
 
 **Rejected alternative**: changing SEQUENCE's ranking formula to force
-fee/heuristic-driven orderings to also minimize `net_cost` (e.g. by
-converting the foreclosure charge into some kind of continuous-rate
-equivalent, or dropping the utilisation override when it doesn't pay for
-itself). Rejected for two reasons: SEQUENCE's current design was already
-reviewed and checkpointed with specific, tested orderings for all seven
-samples, and revising it now without being asked would relitigate settled
-work; and more fundamentally, the utilisation heuristic was never supposed
-to be judged by `net_cost` at all -- it optimizes a different objective
-(credit-score risk), and forcing it to also win on rupees would hide the
-real trade-off a borrower is actually making instead of showing it to them.
+fee/heuristic-driven orderings to also minimize `net_cost` (e.g. converting
+the foreclosure charge into a continuous-rate equivalent, or dropping the
+utilisation override when it doesn't pay for itself). Rejected for two
+reasons: SEQUENCE's current design was already reviewed and checkpointed
+with specific, tested orderings for all seven samples, and revising it now
+without being asked would relitigate settled work; and more fundamentally,
+the utilisation heuristic was never supposed to be judged by `net_cost` at
+all -- forcing it to also win on rupees would hide the real trade-off a
+borrower is making instead of naming it.
 
 ## Git repo scoped to TrueOrder/ itself
 

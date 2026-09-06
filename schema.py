@@ -207,13 +207,96 @@ class AdjustedDebt(BaseModel):
 
 # ---------------------------------------------------------------------------
 # SEQUENCE stage -- naive vs adjusted ordering
+#
+# THE PROJECT'S SINGLE MOST IMPORTANT DISTINCTION (see DECISIONS.md): the
+# adjusted order is not one uniform "cheaper" or "optimal" claim. It
+# resolves THREE separate, sometimes-conflicting objectives, and every
+# divergence between naive and adjusted must be attributed to exactly one
+# of them, with the right kind of claim attached:
+#   - TAX:         a verified deduction lowers this debt's true cost.
+#                  Mechanically cheaper, always, once realized (see
+#                  impact.py's tax-driven regression tests).
+#                  net_rupee_effect > 0 whenever this mechanism fires.
+#   - FEE:         a verified foreclosure charge raises this debt's true
+#                  cost above its stated rate. Correctly identifies it as
+#                  more expensive than naive assumes, but promoting it in
+#                  a real waterfall can come out either cheaper OR
+#                  slightly costlier overall than naive, because a
+#                  one-time balance-proportional charge doesn't behave
+#                  like a continuous rate (see impact.py). This is a
+#                  RANKING JUSTIFICATION, not a savings guarantee.
+#                  net_rupee_effect is negative when a real charge applies.
+#   - UTILISATION: a heuristic override that protects a CIBIL score, not
+#                  rupees. It is EXPLICITLY NOT a cost-savings claim --
+#                  net_rupee_effect is always 0.0 by construction (ADJUST
+#                  applies no rate change at all for this mechanism), and
+#                  `traded_for` states the real, non-rupee reason instead.
+#                  A small real rupee cost from this trade in a waterfall
+#                  is the expected price of the trade, never a failure.
+# Getting this wrong at the explanation layer -- stating a utilisation
+# promotion as a "cost saving," for instance -- is a category error about
+# what kind of claim is being made, worse than a wrong number, and is
+# exactly what the eval (built later) is designed to catch.
 # ---------------------------------------------------------------------------
 
 
+class DivergenceMechanism(str, Enum):
+    TAX = "tax"
+    FEE = "fee"
+    UTILISATION = "utilisation"
+
+
+class DivergenceRationale(BaseModel):
+    """One divergent debt's mechanism attribution -- see the module-level
+    comment above for what each mechanism does and does not claim.
+    `net_rupee_effect` is always an ANNUAL rupee figure computed directly
+    from ADJUST-stage numbers (rate delta x outstanding balance), not a
+    simulated waterfall outcome -- for the actual, realized cash effect of
+    following the full adjusted order, see impact.py's ImpactComparison;
+    this field explains WHY a debt was promoted, it does not substitute for
+    IMPACT's answer to WHAT ACTUALLY HAPPENS."""
+
+    mechanism: DivergenceMechanism
+    net_rupee_effect: float
+    traded_for: str | None = None
+
+    @model_validator(mode="after")
+    def _traded_for_only_for_utilisation(self) -> "DivergenceRationale":
+        if self.mechanism == DivergenceMechanism.UTILISATION:
+            if self.traded_for is None:
+                raise ValueError(
+                    "a utilisation-mechanism rationale must state what it traded rupees for "
+                    "-- this is the one mechanism that is explicitly not a cost-savings claim, "
+                    "and that must never be left implicit"
+                )
+        elif self.traded_for is not None:
+            raise ValueError(
+                f"traded_for is only meaningful for the utilisation mechanism (it exists to "
+                f"flag a non-rupee trade-off); a {self.mechanism.value} rationale is a rupee "
+                f"claim on its own and must not carry one"
+            )
+        return self
+
+
 class RepaymentOrdering(BaseModel):
+    """`divergence_rationale` has exactly one entry per debt_id in
+    `divergence_points` -- every divergence must be attributed to a
+    mechanism, never left as a bare rank change with no stated reason."""
+
     naive_order: list[str]
     adjusted_order: list[str]
     divergence_points: list[str]
+    divergence_rationale: dict[str, DivergenceRationale] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _rationale_matches_divergence_points(self) -> "RepaymentOrdering":
+        if set(self.divergence_rationale) != set(self.divergence_points):
+            raise ValueError(
+                f"divergence_rationale must have exactly one entry per divergence point -- "
+                f"divergence_points={sorted(self.divergence_points)}, "
+                f"divergence_rationale keys={sorted(self.divergence_rationale)}"
+            )
+        return self
 
 
 # ---------------------------------------------------------------------------

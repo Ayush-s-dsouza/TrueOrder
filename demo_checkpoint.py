@@ -75,8 +75,17 @@ def show_sample(segment: str, filename: str) -> None:
         f"tax_benefit={impact.adjusted.total_tax_benefit_realized:>10,.2f}  "
         f"net_cost={impact.adjusted.net_cost:>12,.2f}  months={impact.adjusted.months_to_payoff}"
     )
-    print(f"  net_cost_delta (positive = adjusted cheaper): {impact.net_cost_delta:,.2f}")
+    print(f"  net_cost_delta (this portfolio's actual simulated rupee gap): {impact.net_cost_delta:,.2f}")
     if ordering.divergence_points:
+        print("  -- divergence rationale: WHICH mechanism, and what kind of claim it is --")
+        for debt_id in ordering.divergence_points:
+            r = ordering.divergence_rationale[debt_id]
+            claim = (
+                f"traded for: {r.traded_for}"
+                if r.traded_for is not None
+                else f"net_rupee_effect/yr: Rs {r.net_rupee_effect:,.2f}"
+            )
+            print(f"  [{debt_id}] mechanism={r.mechanism.value:12} {claim}")
         print("  -- adjustment notes for diverging debts --")
         for debt_id in ordering.divergence_points:
             ad = adjusted_by_id[debt_id]

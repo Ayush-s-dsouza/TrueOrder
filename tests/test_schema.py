@@ -11,7 +11,15 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from schema import HomeLoan, PersonalLoan, PropertyOccupancy, RateType
+from schema import (
+    DivergenceMechanism,
+    DivergenceRationale,
+    HomeLoan,
+    PersonalLoan,
+    PropertyOccupancy,
+    RateType,
+    RepaymentOrdering,
+)
 
 
 def test_floating_rate_loan_rejects_a_foreclosure_charge():
@@ -65,6 +73,38 @@ def test_self_occupied_home_loan_rejects_rental_income():
             rate_type=RateType.FLOATING,
             occupancy=PropertyOccupancy.SELF_OCCUPIED,
             annual_rental_income=200_000,
+        )
+
+
+def test_utilisation_rationale_requires_traded_for():
+    """The one mechanism that is explicitly not a cost-savings claim must
+    never let that go unstated -- see DECISIONS.md's "adjusted = cheaper
+    was never a valid blanket claim" entry."""
+    with pytest.raises(ValidationError):
+        DivergenceRationale(mechanism=DivergenceMechanism.UTILISATION, net_rupee_effect=0.0, traded_for=None)
+
+
+@pytest.mark.parametrize("mechanism", [DivergenceMechanism.TAX, DivergenceMechanism.FEE])
+def test_tax_and_fee_rationale_reject_traded_for(mechanism):
+    """tax and fee are rupee claims on their own -- attaching a trade-off
+    framing that only makes sense for utilisation would blur the exact
+    distinction this validator exists to keep sharp."""
+    with pytest.raises(ValidationError):
+        DivergenceRationale(mechanism=mechanism, net_rupee_effect=1.0, traded_for="some trade")
+
+
+def test_repayment_ordering_requires_rationale_for_every_divergence_point():
+    """A divergence point with no rationale entry (or a rationale entry for
+    a debt that isn't actually a divergence point) must be rejected -- a
+    divergence is never left as a bare rank change with no stated reason."""
+    with pytest.raises(ValidationError):
+        RepaymentOrdering(
+            naive_order=["a", "b"],
+            adjusted_order=["b", "a"],
+            divergence_points=["a", "b"],
+            divergence_rationale={
+                "a": DivergenceRationale(mechanism=DivergenceMechanism.TAX, net_rupee_effect=10.0)
+            },
         )
 
 

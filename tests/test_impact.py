@@ -14,29 +14,37 @@
    interest), so the old bug would have made this test hang until
    MAX_SIMULATION_MONTHS and raise.
 
-2. Whether the adjusted order is actually net-cost-CHEAPER once real money
-   is simulated -- and, importantly, that this is NOT true unconditionally.
-   For a TAX-driven divergence (samples 2, 6, 7), the adjusted order is
-   verified net-cheaper: the tax benefit is a continuous, ongoing
-   percentage of actual accrued interest, so ranking by after-tax rate
-   aligns with minimizing net cost once the waterfall correctly rolls
-   forward capacity. For sample 3 (a FEE-driven divergence) and sample 4
-   (the UTILISATION-heuristic-driven divergence), the adjusted order comes
-   out slightly net-COSTLIER in raw rupee terms -- and this is verified as
-   the CORRECT, understood behavior, not a bug:
-   - A foreclosure charge is a one-time cost proportional to whatever
-     balance remains at the moment of payoff, not a continuous rate --
-     unlike the tax shield, its size doesn't scale with "how long you
-     delay," so blending it into a single sort key can promote a
+2. The project's central finding (see DECISIONS.md): "adjusted = cheaper"
+   is not one blanket claim, and net_cost_delta does not mean the same
+   thing for every divergence. It resolves into three mechanism-specific
+   guarantees, each enforced by its own discipline below, not by a single
+   "adjusted should win" assumption:
+   - TAX (samples 2, 6, 7): mechanically cheaper, ALWAYS, when it fires.
+     net_cost_delta > 0 is a REQUIRED regression -- a failure here is a
+     real bug. The tax benefit is a continuous, ongoing percentage of
+     actual accrued interest, so ranking by after-tax rate provably
+     aligns with minimizing net cost once the waterfall correctly rolls
+     forward capacity.
+   - FEE (sample 3): a ranking justification, not a savings guarantee --
+     can come out either cheaper or slightly costlier once realized. This
+     sample's specific sign (costlier) is PINNED as a verified fact about
+     these numbers, not asserted as a general property of the mechanism: a
+     foreclosure charge is a one-time cost proportional to whatever
+     balance remains at payoff, not a continuous rate, so promoting a
      genuinely-lower-nominal-rate debt (a1, 9%) ahead of a genuinely
-     higher-nominal-rate one (pl1, 11%), increasing total nominal interest
-     by more than the small one-time fee saves.
-   - The utilisation heuristic was never a rupee-cost signal at all -- it
-     protects a CIBIL score. Promoting a lower-nominal-rate card (cc2, 30%)
-     ahead of a higher-nominal-rate loan (pl1, 32%) to cross the 30%
-     threshold sooner necessarily costs a little more interest; that small
-     cost IS the price of the trade-off, not a modeling failure.
-   See DECISIONS.md for the full writeup.
+     higher-nominal-rate one (pl1, 11%) increases total nominal interest
+     by more than the one-time fee saves.
+   - UTILISATION (sample 4): explicitly NOT a cost-savings claim.
+     net_cost_delta is not the metric that judges this mechanism's
+     correctness at all (DivergenceRationale.traded_for is, see
+     test_sequence.py) -- this heuristic protects a CIBIL score, not
+     rupees, so a small real cost from the trade is expected, not a
+     modeling failure.
+   Stating a utilisation promotion as a "cost saving," or a fee promotion
+   as an unconditional one, would be a category error about what kind of
+   claim is being made -- worse than a wrong number, since it looks
+   plausible while answering a different question than the one asked. See
+   DECISIONS.md for the full writeup.
 """
 
 from __future__ import annotations
@@ -123,7 +131,12 @@ def test_selfoccupied_new_regime_regression_has_zero_net_cost_delta():
     "segment",
     ["letout_home_old_regime", "education_loan_80e_old_regime", "letout_home_old_regime_loss_capped"],
 )
-def test_tax_driven_divergence_makes_adjusted_order_net_cheaper(segment):
+def test_tax_mechanism_requires_net_cost_delta_positive(segment):
+    """TAX guarantee: mechanically cheaper, ALWAYS, when it fires --
+    net_cost_delta > 0 is a REQUIRED regression for every tax-driven
+    sample, not a directional hope. If this ever fails, that is a real bug
+    (in tax_rules.py, adjust.py, or the waterfall), not a "the trade-off
+    went the other way this time" result -- unlike the fee test below."""
     comparison = _impact_comparison(segment)
     assert comparison.net_cost_delta > 0, (
         f"expected the adjusted order to be net-cheaper for {segment} once the tax benefit "
@@ -131,28 +144,35 @@ def test_tax_driven_divergence_makes_adjusted_order_net_cheaper(segment):
     )
 
 
-def test_fee_driven_divergence_can_leave_adjusted_order_net_costlier():
-    """See module docstring: the foreclosure charge is a one-time,
-    balance-proportional cost, not a continuous rate, so promoting the
-    fixed-rate loan ahead of a genuinely higher-nominal-rate debt can cost
-    slightly more in real nominal interest than the fee saves. This is a
-    verified, understood property of this specific sample's numbers, not
-    an assumption -- if adjust.py's fee formula or sample 3's numbers ever
-    change, this test's failure is the signal to re-verify which direction
-    the trade-off now goes, not to blindly flip the assertion."""
+def test_fee_mechanism_net_cost_delta_sign_is_pinned_not_asserted_as_general():
+    """FEE guarantee: correctly identifies a debt as more expensive than
+    naive assumes; can come out either cheaper OR slightly costlier once
+    realized in a real waterfall (see DECISIONS.md) -- the sign is NOT
+    something this mechanism promises in general. What IS pinned here is
+    the verified, understood fact about THESE specific numbers: a
+    foreclosure charge is a one-time, balance-proportional cost, not a
+    continuous rate, so promoting a1 (9% nominal) ahead of pl1 (11%
+    nominal, genuinely the more expensive debt) costs more in nominal
+    interest (~Rs 2,314) than the fee difference saves (~Rs 27). If
+    adjust.py's fee formula or sample 3's numbers ever change, this test's
+    failure is the signal to re-verify which direction the trade-off now
+    goes, never to blindly flip the assertion to keep the test green."""
     comparison = _impact_comparison("fixed_auto_foreclosure")
     assert comparison.net_cost_delta < 0
 
 
-def test_utilisation_heuristic_divergence_trades_a_small_net_cost_for_score_protection():
-    """The utilisation heuristic protects a CIBIL score, not rupees --
-    cc2's adjusted rate equals its stated rate exactly (no tax/fee
-    adjustment), so promoting it ahead of a genuinely higher-nominal-rate
-    debt (pl1) is expected to cost a little more in real interest. Bounded
-    above to make sure the cost of the trade-off stays small relative to
-    the portfolio's overall interest, not just negative."""
+def test_utilisation_mechanism_net_cost_delta_is_not_the_correctness_metric():
+    """UTILISATION guarantee: explicitly NOT a cost-savings claim -- there
+    is no "correct sign" for net_cost_delta here at all, because this
+    mechanism was never optimizing for rupees. What this test actually
+    checks is that the real cost of the credit-score trade stays small
+    relative to the portfolio (cc2's adjusted rate equals its stated rate
+    exactly -- no tax/fee adjustment -- so any net_cost_delta here is pure
+    trade-off cost, not a modeling artifact), and the SIGN itself is
+    incidental, not the thing being verified. DivergenceRationale.traded_for
+    is the field that actually judges this mechanism's correctness (see
+    test_sequence.py), not this number."""
     comparison = _impact_comparison("utilisation_threshold")
-    assert comparison.net_cost_delta < 0
     assert abs(comparison.net_cost_delta) < 0.01 * comparison.naive.total_interest_paid
 
 
