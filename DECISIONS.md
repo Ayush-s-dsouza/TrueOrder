@@ -624,3 +624,51 @@ measured, and stopping the investigation early -- especially right before
 finding that one of the "failures" was actually the tax-guarantee
 correction hiding in the same batch -- would have shipped both a wrong
 number and a missed finding.
+
+## The fee and capped-tax sign-ambiguity findings are ONE root cause, not two
+
+Read separately, the two entries above look like two unrelated surprises
+in two different mechanisms. They are the same structural limitation
+showing up twice: `sequence.py` ranks every debt from a single
+point-in-time snapshot of its true cost (`adjust.py`'s `after_tax_rate_pct`
+and `foreclosure_adjusted_rate_pct`, both computed once, before any
+simulation exists to walk forward in time), but the actual rupee outcome
+of following an order is a PATH-DEPENDENT result that unfolds over the
+debt's full amortization -- and a single snapshot is only a faithful stand-in
+for that whole path when a debt's true cost per rupee stays constant
+throughout its life. For the fee mechanism, it doesn't: a foreclosure charge
+is a one-time lump sum tied to whatever balance happens to remain at the
+exact moment of payoff, not a cost that accrues continuously the way
+interest does, so annualizing it into a rate-equivalent for ranking
+purposes compares a lump sum against an ongoing cost as if they were the
+same kind of quantity. For the capped-tax case, it doesn't either, for a
+different reason: the Section 71(3A) ₹2L cap is a FIXED rupee amount, so as
+the balance amortizes down and annual interest shrinks, that fixed cap
+becomes a LARGER fraction of a SMALLER interest bill -- the shield genuinely
+improves over the loan's life instead of holding flat, which a single
+snapshot taken at ranking time has no way to see coming. Both mechanisms
+correctly identify that a debt is more expensive (fee) or more
+tax-advantaged (capped tax) than its stated rate alone would suggest --
+the ATTRIBUTION is never in question -- but neither guarantees that
+prioritizing it in a real waterfall reproduces the ranking's implied
+saving, because the ranking was never built to see the shape of the cost
+over time, only its value at one instant.
+
+**Decision**: this is documented as one structural finding, not two
+mechanism-specific quirks, in the README's limitations section (led with
+this, ahead of the 100% faithfulness number -- it is the more interesting
+and more honest thing to say about this project) and here. The fix, if
+this project's scope is ever extended, would be a ranking signal that
+integrates true cost over a debt's projected path rather than sampling it
+once -- explicitly out of scope for this build, named rather than silently
+left as a gap.
+
+**Rejected alternative**: leaving the two findings in their original,
+separately-discovered form. Rejected because a reader who only sees "fee
+can go either way" and, elsewhere, "tax can go either way in one specific
+segment" would reasonably conclude these are two unrelated edge cases to
+patch individually, when the actually useful thing to understand is the
+one design property of `sequence.py` that produces both -- and would
+produce a third instance, in a debt type this project doesn't model, under
+the same condition (a true cost that changes shape over the amortization
+path).
