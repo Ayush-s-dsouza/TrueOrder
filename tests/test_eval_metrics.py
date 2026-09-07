@@ -15,6 +15,7 @@ from adjust import adjust_portfolio
 from eval.ground_truth import ground_truth_for_case
 from eval.metrics import (
     COSTLIER_ADMISSION_PATTERN,
+    SAVINGS_LANGUAGE_PATTERN,
     _is_negated,
     _numbers_match,
     adjusted_order_sequence_correct,
@@ -104,6 +105,22 @@ def test_no_invented_numbers_allows_the_interest_and_fee_deltas():
     )
     ok, count = no_invented_numbers(text, gt)
     assert ok, f"expected the derived deltas to be allowed, got {count} invented numbers"
+
+
+def test_savings_language_pattern_recognizes_costs_less_as_favorable():
+    """Real bug, found via the held-out test run (see DECISIONS.md): "the
+    adjusted sequence costs you less overall" is a correct, favorable
+    statement (net_cost_delta was positive) that contains none of "save",
+    "cheaper", or "lower cost" -- the only phrasings the pattern originally
+    recognized. "cost(s) ... less" is the favorable-direction mirror of
+    COSTLIER_ADMISSION_PATTERN's "cost(s) ... more"."""
+    for text in (
+        "the adjusted sequence costs you less overall",
+        "following this order saves you money",
+        "the adjusted plan is cheaper",
+        "this results in a lower net cost",
+    ):
+        assert SAVINGS_LANGUAGE_PATTERN.search(text), f"expected a match in: {text!r}"
 
 
 def test_numbers_match_ignores_sign():

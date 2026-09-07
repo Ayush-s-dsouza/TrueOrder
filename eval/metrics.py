@@ -42,7 +42,16 @@ from schema import DivergenceMechanism
 RESULTS_DIR = Path(__file__).parent / "results"
 
 NUMBER_PATTERN = re.compile(r"-?\d[\d,]*\.?\d*")
-SAVINGS_LANGUAGE_PATTERN = re.compile(r"\bsav(?:e|es|ed|ing)\b|\bcheaper\b|\blower\s+(?:net\s+)?cost\b", re.IGNORECASE)
+SAVINGS_LANGUAGE_PATTERN = re.compile(
+    # "cost(s) ... less" is the favorable-direction mirror of
+    # COSTLIER_ADMISSION_PATTERN's "cost(s) ... more" -- real bug found via
+    # the held-out run: "the adjusted sequence costs you less overall" is a
+    # correct, favorable statement (net_cost_delta was positive) that
+    # doesn't contain "save", "cheaper", or "lower cost" at all, and was
+    # missed until this was added (see DECISIONS.md).
+    r"\bsav(?:e|es|ed|ing)\b|\bcheaper\b|\blower\s+(?:net\s+)?cost\b|cost(?:s|ing)?\s+.{0,30}?\bless\b",
+    re.IGNORECASE,
+)
 COSTLIER_ADMISSION_PATTERN = re.compile(
     # "cost(s) ... more" allows a short character span between them ("costs
     # slightly more", "costs about Rs 1,417.93 more") -- real bug found via

@@ -672,3 +672,72 @@ one design property of `sequence.py` that produces both -- and would
 produce a third instance, in a debt type this project doesn't model, under
 the same condition (a true cost that changes shape over the amortization
 path).
+
+## api.py deliberately breaks from Prequal's "API never touches an LLM" pattern
+
+Prequal's `test_no_llm_imports.py` includes `api.py`, `pipeline.py`, and
+`run.py` in its checked-module list -- proving the live API surface never
+calls a model, because Prequal's only LLM-calling module
+(`author_criterion.py`) is an offline authoring tool, invoked only from
+`eval/collect.py` and a manual CLI, never from the live assess path.
+
+**Decision**: TrueOrder's `api.py` does NOT get added to
+`test_no_llm_imports.py`'s `CHECKED_MODULES`. Its EXPLAIN stage genuinely
+is part of the live pipeline the brief describes (stage 6 of 6), not an
+offline tool, so `POST /assess` is allowed to invoke `explain.py` --
+deliberately, as an explicit opt-in (`explain: true` in the request body,
+default `False`). The deterministic path (`ADJUST`->`SEQUENCE`->`IMPACT`)
+costs nothing and calls no model regardless of this flag;
+`tests/test_api.py::test_assess_explain_false_never_imports_explain`
+proves the default path never even touches `explain.explain`, not just
+that it happens not to be called.
+
+**Rejected alternative**: mirroring Prequal exactly (add `api.py` to
+`CHECKED_MODULES`, keep the API fully deterministic, require a separate
+process to generate explanations). Rejected because it would misrepresent
+the actual design -- EXPLAIN is stage 6 of TrueOrder's own six-stage
+pipeline, not a side authoring tool, so an API that could never reach it
+would be a materially incomplete implementation of the pipeline this
+project set out to build, not a more disciplined one.
+
+## The held-out test split: opened once, one more metrics bug found, 100% confirmed
+
+Per `eval/splits.py`'s own discipline, the `test` split was opened exactly
+once, at the end, via `load_split('test', allow_test=True)` triggered
+through the `EVAL_ALLOW_TEST_SET=1` environment-variable escape hatch --
+logged automatically to `eval/TEST_SET_ACCESS_LOG.jsonl` (`"via": "env"`).
+26 calls (13 held-out cases, 2 repeats each), 0 errors, Rs 17.63.
+
+The first run scored 96.2% (25/26), and the same discipline applied to
+the baseline run applied here: the one apparent failure was investigated
+before being trusted, not reported as-is. `letout_home_old_regime_loss_
+capped_004` (run 1) had `net_cost_delta = +3,552.60` (a favorable, tax-
+mechanism-driven outcome) and said so correctly -- "the adjusted sequence
+costs you less overall" -- but `SAVINGS_LANGUAGE_PATTERN` only recognized
+"save", "cheaper", or "lower cost" as favorable language, missing "costs
+... less" entirely (the exact mirror-image gap `COSTLIER_ADMISSION_
+PATTERN` had for "costs ... more", fixed earlier in this same file's
+history and, evidently, not generalized to its own opposite case at the
+time). Fixed the same way: a character-count gap between "cost(s)" and
+"less". Sixth real metrics bug found this way in total, and the sixth
+permanent regression test in `tests/test_eval_metrics.py`.
+
+**Decision**: both splits are reported together, honestly, as what they
+are -- **baseline (tune+validation, 58 calls): 100% faithfulness. Held-out
+test (26 calls, opened once): 100% faithfulness**, after the same fix
+applied to both experiment files. The held-out split's job was to confirm
+the baseline number wasn't an artifact of tuning against the same data
+repeatedly (it wasn't -- no prompt tuning happened between the two runs,
+`eval/experiments.py` was never built, see the cut-order decision), and
+it does that job: the SAME six categories of fix, applied once, generalize
+to data this project had not previously inspected.
+
+**Rejected alternative**: reporting the held-out run's first-pass 96.2%
+as final, on the reasoning that "the test split is supposed to be graded
+once, not iterated on." Rejected because that discipline protects against
+tuning *explain.py* against test-split feedback -- it was never meant to
+protect a bug in the *grading code itself* from being fixed. Every prior
+metrics bug in this project was fixed immediately on discovery regardless
+of which split surfaced it; treating this one differently, right at the
+finish line, would have shipped a known-wrong headline number for no
+reason connected to the actual discipline being protected.

@@ -2,239 +2,248 @@
 
 A debt-repayment sequencing engine for a mixed Indian debt portfolio (credit
 cards, personal/home/auto/education loans) that computes a tax-and-fee-
-adjusted repayment order, alongside the naive avalanche order most tools and
-AI assistants give today, and shows exactly where and why they diverge.
+adjusted repayment order alongside the naive avalanche order most tools and
+AI assistants give today, and shows exactly where, why, and how reliably
+they diverge.
 
-Asked directly, "I have 5 EMIs and 4 credit cards, what order should I repay
-them in?", Dhruva returns textbook avalanche: highest stated interest rate
-first. That's not wrong in general -- for an all-unsecured portfolio with no
-tax-advantaged debt, it's the right answer. It's wrong specifically when a
-home loan's real cost depends on tax regime and property occupancy, a
-fixed-rate loan carries a real foreclosure charge a floating-rate loan of the
-same stated rate doesn't, or paying down one credit card versus another
-crosses a credit-utilisation threshold that affects a credit score in a way
-no interest-rate comparison captures. See [RUNBOOK.md](RUNBOOK.md) for the
-full manual process this replaces, and [DECISIONS.md](DECISIONS.md) for
-every choice made building it, including several corrections to claims this
-project itself got wrong at first.
+## The gap
 
-## Limitations -- read this before the numbers below
+Asked directly -- "I have 5 EMIs and 4 credit cards, what order should I
+repay them in?" -- Dhruva returns textbook avalanche: sort by stated
+interest rate, highest first. No question about tax regime, no question
+about whether a property is self-occupied or rented out, no mention that a
+floating-rate loan and a fixed-rate loan of the same stated APR carry very
+different prepayment consequences. Checking independently: the in-app
+Cards/Loans tabs are per-instrument only, and Oolka's premium tier is
+utilisation alerts and bureau-dispute automation -- genuinely useful, but
+not avalanche/snowball optimization or lump-sum-split guidance across a
+portfolio. Naive avalanche isn't wrong in general -- for an all-unsecured
+portfolio with no tax-advantaged debt, it's the right answer, and this
+project's own "agreement case" sample confirms the two orderings converge
+exactly when nothing distinguishes them. It's wrong specifically in the
+cases that produce a genuine conflict, and those are what the rest of this
+README is about. See [RUNBOOK.md](RUNBOOK.md) for the full manual process
+this replaces, step by step.
 
-**The ranking itself is a snapshot; the real outcome is a path.**
-`sequence.py` ranks every debt once, from a single point-in-time estimate of
-its true cost (`adjust.py`'s after-tax and fee-adjusted rates, both computed
-before any month-by-month simulation exists to walk forward in time). That
-snapshot is only a faithful stand-in for a debt's whole repayment life when
-its true cost per rupee stays constant throughout -- and for two of this
-project's own dimensions, it doesn't. A foreclosure charge is a one-time
-lump sum tied to whatever balance happens to remain at the exact moment of
-payoff, not a cost that accrues continuously like interest does, so
-annualizing it into a rate for ranking purposes compares a lump sum against
-an ongoing cost as if they were the same kind of quantity. A home loan
-whose interest exceeds rental income plus the Section 71(3A) ₹2,00,000 cap
-has a deduction that is a *fixed rupee amount*, so as the balance amortizes
-down and annual interest shrinks, that fixed cap becomes a *larger fraction*
-of a *smaller* interest bill -- the tax shield genuinely improves over the
-loan's life instead of holding flat, which a single upfront snapshot cannot
-see coming. Both mechanisms correctly identify that a debt is more
-expensive (fee) or more tax-advantaged (capped tax) than its stated rate
-alone suggests -- the *attribution* is never in question -- but neither
-guarantees that prioritizing it in a real waterfall reproduces the exact
-saving the ranking implied. Verified directly, not assumed: sweeping the
-eval manifest's six portfolios for the capped-tax segment shows three
-positive and three negative simulated outcomes, every one under 0.05% of
-the multi-million-rupee net costs involved. See DECISIONS.md's "one root
-cause, not two" entry for the full mechanism, and the worked example below
-for a real, faithfully-explained instance of a tax-driven divergence that
-still costs slightly more.
+## The core finding
 
-**Everything else, briefer:**
+A single "optimal" repayment order is a category error. Asking "what order
+should I repay my debts in?" is actually asking about three separate,
+sometimes-conflicting objectives at once, and collapsing them into one
+"cheaper" or "optimal" label -- the way naive avalanche does implicitly, and
+the way this project's own adjusted order could just as easily have done if
+built less carefully -- misrepresents what kind of claim is being made for
+at least one of the three:
+
+- **Tax** -- a verified deduction lowers a debt's true cost. A rupee claim,
+  and (usually) a reliable one.
+- **Fee** -- a verified foreclosure charge raises a debt's true cost above
+  its stated rate. Also a rupee claim, but never a savings guarantee --
+  more on why below.
+- **Utilisation** -- a heuristic that protects a credit score, not rupees.
+  Explicitly *not* a rupee claim at all; promoting a card for this reason
+  can cost a little real money as the price of the trade, on purpose.
+
+That much would already justify keeping the three mechanisms separate
+(`schema.DivergenceMechanism`, `DivergenceRationale`, enforced by a
+validator that makes `traded_for` required for utilisation and forbidden
+for tax/fee -- see DECISIONS.md). But there's a second, deeper layer,
+found only by actually simulating outcomes rather than trusting the
+ranking that produced them: **two of the three mechanisms are further
+unstable across time, because they are ranked from a single point-in-time
+snapshot of what is actually a path-dependent process.**
+`sequence.py` computes each debt's true cost once, before any
+month-by-month simulation exists to walk forward in time. That snapshot is
+a faithful stand-in for a debt's whole repayment life only when its true
+cost per rupee stays constant throughout -- and for fee and (part of) tax,
+it doesn't:
+
+- A foreclosure charge is a one-time lump sum tied to whatever balance
+  happens to remain at the exact moment of payoff, not a cost that accrues
+  continuously the way interest does. Annualizing it into a rate for
+  ranking purposes compares a lump sum against an ongoing cost as if they
+  were the same kind of quantity -- so prioritizing the "more expensive"
+  debt by that ranking does not reliably reduce the real, simulated total.
+- A home loan whose interest exceeds rental income plus the Section
+  71(3A) ₹2,00,000 cap has a deduction that is a *fixed rupee amount*. As
+  the balance amortizes down and annual interest shrinks, that fixed cap
+  becomes a *larger fraction* of a *smaller* interest bill -- the tax
+  shield genuinely improves over the loan's life instead of holding flat.
+  A snapshot taken once, before any of that amortization has happened,
+  cannot see the improvement coming.
+
+Both failures are the same root cause wearing two mechanisms' clothing, not
+two unrelated quirks (see DECISIONS.md's "one root cause, not two" entry).
+Verified directly, not assumed: sweeping this project's own eval manifest
+for the affected tax segment shows three portfolios where the adjusted
+order comes out cheaper and three where it comes out very slightly more
+expensive -- same mechanism, same attribution logic, opposite outcome,
+depending only on where each portfolio happens to sit in its amortization.
+
+## Worked example: the same mechanism, the same segment, opposite outcomes
+
+Both of the following are real, unedited `explain()` outputs for the exact
+same segment (`letout_home_old_regime_loss_capped` -- an old-regime,
+let-out home loan whose interest exceeds the Section 71(3A) cap) --
+different portfolios, same divergence, same tax mechanism correctly
+identified and correctly reasoned about in both. The only thing that
+differs is where each portfolio's numbers land relative to the cap, which
+`sequence.py`'s upfront ranking has no way to know.
+
+**Instance where it works as the ranking implies** (`samples/sample_007_letout_home_old_regime_loss_capped.json`, net_cost_delta = +Rs 7,762.54):
+
+> If you just rank everything by the headline APR on your statements, you
+> would attack your credit card (cc1) first at 42 percent, then your home
+> loan (h1) at 11 percent, then your personal loan (pl1) at 10.5 percent;
+> that naive order is cc1, h1, pl1. But the engine factors in tax and fees
+> to find the true effective cost, and it returns cc1, pl1, h1. [...] You
+> are on the old regime with a let-out property, and the interest is
+> giving you a deduction of Rs 300,000 this year, which is worth Rs 90,000
+> per year at your 30 percent marginal rate. [...] When you run the
+> simulation with the surplus you were given, the adjusted order comes out
+> cheaper in practice. The simulated net cost difference is Rs
+> 7,762.54 -- meaning naive minus adjusted -- so following the adjusted
+> order saves you about that much in real cost over the life of the plan.
+
+**Instance where it doesn't** (`letout_home_old_regime_loss_capped_002` from the eval manifest, net_cost_delta = -Rs 1,417.93):
+
+> Your home loan (h1) is a let-out property claimed under the old tax
+> regime, and it carries a genuine, reliable tax saving of Rs 90,000 per
+> year through Section 24(b): the interest is fully deductible against
+> rental income with no cap, plus you can set off up to Rs 200,000 of the
+> resulting loss against other income under Section 71(3A), giving a
+> deductible amount of Rs 300,000 this year. That tax benefit pulls h1's
+> true cost below its stated rate, which is why the adjusted plan pushes
+> it to the back and clears pl1 first. [...] If you follow the adjusted
+> order instead of the naive one with the same monthly surplus, it costs
+> slightly more in practice: the simulated net cost is Rs 4,174,519.51
+> compared with Rs 4,173,101.58, a difference of Rs 1,417.93 over the full
+> 116-month payoff period.
+
+Both explanations are scored 100% faithful by every check in
+`eval/metrics.py`. Neither one is wrong; the second one is simply honest
+about an unfavorable number instead of assuming the mechanism's usual
+reliability applies here too. That honesty is the entire point --
+`explain.py`'s system prompt requires stating the real simulated
+comparison exactly as computed, never inferring it from which mechanism
+fired.
+
+## Eval results
+
+Ground truth is generated by this project's own deterministic core --
+`eval/manifest.py` builds 42 cases across all 7 named segments (6 each);
+`eval/collect.py` calls `explain()` per case; `eval/metrics.py` grades each
+explanation against what `sequence.py`/`impact.py` actually computed for
+that exact portfolio.
+
+**Baseline (`tune`+`validation`, 58 calls, 2 repeats/case, 0 errors, Rs
+40.85 total cost): 100% faithfulness.** Not the first number produced --
+the first full run scored 79.3%, and every apparent "failure" behind that
+number turned out, on inspection, to be a bug in the grading heuristic,
+not in `explain.py`'s output. Five of them in total: a number-matching
+check that was sign-sensitive (a correctly restated "costs Rs 949.66 more"
+flagged as fabricating a number that appeared in the ground truth as
+-949.66), a false-claim detector with no negation handling ("there are no
+tax deductions" flagged as claiming one), an order-check that silently
+verified the *naive* sequence instead of the adjusted one (naive is
+conventionally described first in prose), an admission-phrase pattern
+broken by punctuation in rupee figures, and a fabrication check that
+couldn't recognize correct arithmetic on given numbers. Each is a
+permanent regression test in `tests/test_eval_metrics.py` now, with the
+literal real-world string that exposed it.
+
+**Held-out `test` split (26 calls, 2 repeats/case, opened once via
+`load_split('test', allow_test=True)`, logged in
+`eval/TEST_SET_ACCESS_LOG.jsonl`, 0 errors, Rs 17.63 total cost): 100%
+faithfulness.** Also not the first number: the first pass scored 96.2%
+(25/26), and the one failure was investigated with the same discipline as
+the baseline run rather than accepted as-is -- a genuinely favorable,
+correctly-reasoned outcome ("the adjusted sequence costs you less
+overall", `net_cost_delta = +Rs 3,552.60`) was missed because
+`SAVINGS_LANGUAGE_PATTERN` recognized "save"/"cheaper"/"lower cost" but
+not "costs ... less", the exact mirror-image gap already fixed on the
+*costlier*-admission side earlier in this same eval's development and not
+generalized to its opposite at the time. Sixth metrics bug found this way,
+sixth permanent regression test. The held-out split's actual job --
+confirming the baseline result generalizes to data never previously
+inspected, since no prompt tuning happened in between (`eval/
+experiments.py` was never built, see below) -- is what this second 100%
+number demonstrates.
+
+## Remaining limitations
+
+- **`marginal_tax_rate_pct` is a required input, not derived from income.**
+  Computing India's actual slab/surcharge/cess schedule (which changes most
+  Finance Acts) is a real verification burden orthogonal to this project's
+  actual value -- debt-repayment sequencing, not tax-slab calculation. The
+  caller states their own bracket directly; getting this wrong is on the
+  input, not on `tax_rules.py`.
+- **The utilisation/CIBIL heuristic's score-impact range is explicitly a
+  heuristic, not a calibrated figure.** The 30% aggregate-utilisation
+  threshold itself is real and widely cited; the commonly quoted "30-80
+  point" score impact is not published by any bureau.
+  `utilisation_priority_score` is a binary crossing signal for exactly
+  this reason, and `DivergenceRationale.traded_for` states the uncertainty
+  explicitly whenever the mechanism fires.
+- **Single-point-in-time ranking is now a stated, proven limitation, not
+  an unexamined assumption.** This is the core finding above, restated as
+  a limitation rather than a discovery: `sequence.py` cannot see a debt's
+  cost trajectory, only its cost right now, and for a rupee cap or a
+  one-time charge, "right now" is not the whole story. Extending the
+  ranking to integrate true cost over a debt's projected path instead of
+  sampling it once is the natural next step, and is explicitly out of
+  scope for this build.
 - **Synthetic amounts throughout.** Every sample and eval portfolio is
-  generated by `synth/generator.py`, not drawn from real account data.
-  Balances, rates, and tenures are chosen to be realistic and to reliably
-  trigger a specific divergence, not fit to any actual population.
-- **The utilisation/CIBIL heuristic is explicitly a heuristic.** The 30%
-  aggregate-utilisation threshold is real and widely cited; the commonly
-  quoted "30-80 point" score impact is not a published, precise bureau
-  figure. `utilisation_priority_score` is a binary crossing signal, never
-  presented as a calibrated number, and `DivergenceRationale.traded_for`
-  states this explicitly whenever the mechanism fires.
-- **Tax and fee rules are current as of 2026-09-06** (see `tax_rules.py` and
-  `fee_rules.py` for the verified source of every rule), and are subject to
-  change by a future Finance Act or RBI circular. Both modules carry a
-  schema-pinned disclaimer to that effect that cannot be silently reworded
-  or omitted (see `schema.RulesCurrencyDisclaimer`).
+  generated by `synth/generator.py`, chosen to reliably trigger a specific
+  divergence, not fit to any real population.
+- **Tax and fee rules are current as of 2026-09-06** (every rule in
+  `tax_rules.py`/`fee_rules.py` cites its source) and are subject to
+  change by a future Finance Act or RBI circular.
 - **Five debt types, chosen for dimension coverage, not exhaustiveness.**
   Gold loans, loan-against-securities/mutual-funds, BNPL/short-term app
-  loans, and overdraft facilities are explicitly out of scope -- the five
-  types here already cover every tax/fee/utilisation dimension that
-  produces a genuine ordering conflict; more types would add research
-  burden without adding a new *kind* of tension.
+  loans, and overdraft facilities are explicitly out of scope.
 - **No compound divergence support yet.** A hypothetical fixed-rate,
-  let-out home loan (both tax and fee mechanisms active on the same debt at
-  once) is deliberately unsupported -- `sequence.py` raises rather than
-  guessing which mechanism to attribute it to. Proven to raise through the
-  real pipeline, not just at the type level (see `tests/test_sequence.py`).
-- **The eval is small-scale and text-heuristic-graded, not model-judged.**
-  42 synthetic cases, 2 repeats per case on the non-held-out splits, plain
-  regex/keyword checks rather than an LLM judge. Several of those
-  heuristics themselves needed real bug fixes during development (see
-  DECISIONS.md) -- the checks are documented as necessary-but-not-sufficient
-  where that's true (e.g. `utilisation_correctly_framed` proves the right
-  vocabulary appears, not that no contradicting claim exists elsewhere in
-  the same explanation).
-- **The held-out test split has never been opened.** All eval numbers below
-  come from `tune`+`validation` only; `eval/splits.py` locks `test` behind
-  an explicit flag and logs every access, by design, so it stays meaningful
-  if this project is extended later.
-- **No API, CLI, or persistence layer yet.** `impact.py` and `explain.py`
-  are the last stages actually built; `emit.py`/`audit.py`/`pipeline.py`/
-  `run.py`/`api.py` from the original design are not implemented. Every
-  result in this README comes from `demo_checkpoint.py` or the `eval/`
-  scripts run directly.
+  let-out home loan (both tax and fee mechanisms active on the same debt
+  at once) is deliberately unsupported -- proven to raise through the real
+  pipeline, not just at the type level, in `tests/test_sequence.py`.
 - **`eval/experiments.py` (prompt-hypothesis tuning) was not built** --
-  named in the project's own cut order as the first thing to drop under a
-  timebox, and it was.
+  there is nothing to tune against a 100% baseline, and it was already the
+  first item in this project's own cut order.
+- **No persistence/CLI layer.** `emit.py`/`audit.py`/`pipeline.py`/`run.py`
+  from the original design are not implemented; `demo_checkpoint.py`,
+  `api.py`, and the `eval/` scripts are the only ways to run this today.
 
 ## What it does
 
 Five deterministic stages, zero LLM calls, enforced by an AST-based test
 (`tests/test_no_llm_imports.py`) that would fail if any of them ever
-imported one:
-
-**PROFILE** (`profile.py`) parses a portfolio -- N debts, each with type,
-balance, stated APR, tenure, minimum payment, and type-specific fields
-(property occupancy for home loans, floating/fixed for personal/home/auto
-loans, utilisation for credit cards) -- into a schema (`schema.py`) whose
-validators reject an incomplete or self-contradictory debt at construction
-time rather than silently defaulting it (a floating-rate loan can never
-carry a foreclosure charge in memory at all; a let-out home loan can never
-omit its rental income).
-
-**ADJUST** (`adjust.py`) computes each debt's true effective cost: an
-after-tax rate from verified Section 24(b)/80E rules (`tax_rules.py`), a
-fee-adjusted rate from verified RBI foreclosure rules (`fee_rules.py`), and,
-for credit cards, a utilisation-crossing priority score.
-
-**SEQUENCE** (`sequence.py`) produces two orderings side by side -- naive
-(sorted by stated APR alone) and adjusted (sorted by true effective cost,
-with the utilisation signal applied as an explicit override) -- and
-attributes every divergence between them to exactly one of three mechanisms
-(`DivergenceMechanism`: `tax`, `fee`, `utilisation`), each carrying a
-different *kind* of claim, never a generic "cheaper" (see Limitations
-above, and DECISIONS.md's central finding on why this distinction exists at
-all).
-
-**IMPACT** (`impact.py`) simulates both orderings month by month with a
-real waterfall -- interest accrues at each debt's stated rate; a paid-off
-debt's freed-up minimum payment rolls forward into the next-priority debt's
-surplus, the standard "snowball" effect an earlier, buggy version of this
-simulation got wrong (see DECISIONS.md) -- and reports the actual simulated
-rupee difference between following each order.
-
-**EXPLAIN** (`explain.py`) is the one file that calls a model (Sarvam's
-`sarvam-105b`), turning the computed ADJUSTED plan into Dhruva-style
-conversational prose. Its system prompt encodes the three-mechanism
-distinction directly: state a tax-driven divergence as a real saving, a
-fee-driven one as a ranking justification with no savings guarantee, and a
-utilisation-driven one as explicitly not a rupee claim -- and never let an
-unfavorable overall cost comparison go unstated.
-
-## Worked example: a tax-driven divergence that still costs slightly more
-
-This is a real, unedited explanation from the eval's baseline collection
-(`letout_home_old_regime_loss_capped_002`, one of the three capped-tax
-indices whose simulated outcome came out negative -- see Limitations
-above), scored 100% faithful by every check in `eval/metrics.py`:
-
-> The adjusted order is cc1, then pl1, then h1, while the naive order is
-> cc1, then h1, then pl1. The only change is that your personal loan (pl1)
-> moves ahead of your home loan (h1). Your credit card (cc1) stays at the
-> front in both plans because its 42% rate is far higher than everything
-> else. Your personal loan (pl1) has no tax deduction at all under this
-> model, so its net rupee effect is zero and there is no tax-driven saving
-> to factor in. Your home loan (h1) is a let-out property claimed under the
-> old tax regime, and it carries a genuine, reliable tax saving of Rs
-> 90,000 per year through Section 24(b): the interest is fully deductible
-> against rental income with no cap, plus you can set off up to Rs 200,000
-> of the resulting loss against other income under Section 71(3A), giving a
-> deductible amount of Rs 300,000 this year. That tax benefit pulls h1's
-> true cost below its stated rate, which is why the adjusted plan pushes it
-> to the back and clears pl1 first. Neither term loan has a foreclosure or
-> prepayment charge, so no fee-adjustment changes the outcome for this
-> portfolio. If you follow the adjusted order instead of the naive one with
-> the same monthly surplus, it costs slightly more in practice: the
-> simulated net cost is Rs 4,174,519.51 compared with Rs 4,173,101.58, a
-> difference of Rs 1,417.93 over the full 116-month payoff period.
-
-Notice what this explanation does *not* do: it doesn't claim the tax
-saving makes the adjusted order cheaper overall, because for this specific
-portfolio it doesn't. It states the real deduction, the real reasoning for
-the reorder, and the real -- unfavorable -- simulated delta, all in one
-coherent answer. Compare this against a genuinely constant-fraction tax
-case (`letout_home_old_regime`), where the same mechanism reliably wins:
-
-```
-naive order    (stated APR desc):     ['cc1', 'h1', 'pl1']
-adjusted order (effective cost desc): ['cc1', 'pl1', 'h1']
-divergence points:                    ['h1', 'pl1']
--- impact, 15000/month surplus, real waterfall --
-naive   : interest=1,831,979.87  fees=0.00  tax_benefit=536,885.71  net_cost=1,295,094.16  months=84
-adjusted: interest=1,832,916.64  fees=0.00  tax_benefit=543,149.72  net_cost=1,289,766.92  months=84
-net_cost_delta (this portfolio's actual simulated rupee gap): 5,327.24
-[h1] mechanism=tax  net_rupee_effect/yr: Rs 128,048.53
-```
-
-Same mechanism, same attribution logic, opposite reliability -- because one
-home loan's deduction fraction is constant over its life and the other's
-isn't. That difference is invisible to `adjust.py`'s ranking and only shows
-up once `impact.py` actually simulates the path.
-
-## Faithfulness eval
-
-Ground truth is generated by this project's own deterministic core -- no
-hand-verification against an external source needed for the *eval data*
-itself (only the underlying tax/fee rules required that, done once, in
-`tax_rules.py`/`fee_rules.py`). `eval/manifest.py` builds 42 cases across
-all 7 named segments (6 each); `eval/collect.py` calls `explain()` twice
-per case on the `tune`+`validation` splits (58 calls); `eval/metrics.py`
-grades each explanation against the ground truth `sequence.py`/`impact.py`
-actually computed.
-
-**Headline result: 100% faithfulness** across all 58 calls (0 errors, Rs
-40.85 total cost) -- every debt mentioned, the adjusted order stated
-correctly, no invented numbers, every unfavorable cost comparison honestly
-admitted, every utilisation-driven divergence correctly framed as
-protecting a credit score rather than saving money, and no tax benefit
-claimed where the rules say none applies.
-
-That number was not the first one produced, and it isn't reported as if it
-were. The first full run scored 79.3%, and every one of the apparent
-"failures" behind that number turned out, on inspection, to be a bug in
-the grading heuristic rather than in `explain.py`'s output -- five of them
-in total, including a number-matching check that was sign-sensitive (a
-correctly restated "costs Rs 949.66 more" flagged as fabricating a number
-that appeared in the ground truth as -949.66), a false-claim detector with
-no negation handling ("there are no tax deductions" flagged as claiming
-one), an order-check that silently verified the *naive* sequence instead
-of the adjusted one (naive is conventionally described first in prose), an
-admission-phrase pattern broken by punctuation in rupee figures, and a
-fabrication check that couldn't recognize correct arithmetic on given
-numbers. Each is a permanent regression test in `tests/test_eval_metrics.py`
-now, with the literal real-world string that exposed it. Full account of
-every one, plus the tax-mechanism correction they surfaced along the way,
-in [DECISIONS.md](DECISIONS.md).
+imported one -- **PROFILE** (`profile.py`/`schema.py`) parses and validates
+a portfolio, rejecting an incomplete or self-contradictory debt at
+construction time; **ADJUST** (`adjust.py`) computes each debt's true
+effective cost from verified tax (`tax_rules.py`) and fee (`fee_rules.py`)
+rules; **SEQUENCE** (`sequence.py`) produces the naive and adjusted
+orderings and attributes every divergence to its mechanism; **IMPACT**
+(`impact.py`) simulates both orderings month by month with a real
+waterfall (freed-up minimum payments roll forward into the next-priority
+debt's surplus -- the "snowball" effect an earlier, buggy version of this
+simulation got wrong, see DECISIONS.md) and reports the real cost
+difference. **EXPLAIN** (`explain.py`) is the one file that calls a model
+(Sarvam's `sarvam-105b`), turning the computed plan into Dhruva-style
+prose, required to state each divergence's correct kind of claim and never
+let an unfavorable cost comparison go unstated.
 
 ## Running it
 
 ```
 uv sync
-uv run pytest                                    # 43 tests, deterministic core + eval heuristics
-uv run python demo_checkpoint.py                 # regenerates samples/, prints both orderings for all 7
-uv run python -m eval.manifest                    # regenerates eval/manifest.json
+uv run pytest                                     # 49 tests, deterministic core + eval heuristics + API
+uv run python demo_checkpoint.py                  # regenerates samples/, prints both orderings for all 7
+uv run uvicorn api:app --reload                   # POST /assess, GET /health
+uv run python -m eval.manifest                     # regenerates eval/manifest.json
 uv run python -m eval.collect --experiment X --split tune validation --repeats 2
-uv run python -m eval.metrics --experiment X      # prints the faithfulness report
+uv run python -m eval.metrics --experiment X       # prints the faithfulness report
 ```
 
-`explain.py` and `eval/collect.py` need `SARVAM_API_KEY` in a `.env` file
-(gitignored) and make real, billed API calls -- `pytest` never does.
+`explain.py`, `eval/collect.py`, and `POST /assess` with `explain: true`
+need `SARVAM_API_KEY` in a `.env` file (gitignored) and make real, billed
+API calls -- `pytest` never does.
