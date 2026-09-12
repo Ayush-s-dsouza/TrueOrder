@@ -327,6 +327,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
     "net_cost_delta": 5423.198711011559,
@@ -378,6 +379,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
     "net_cost_delta": 5567.284524430288,
@@ -429,6 +431,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
     "net_cost_delta": 6681.904509259621,
@@ -480,9 +483,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 8593.121642625425,
+    "net_cost_delta": 7816.495003840653,
     "split": "tune"
   },
   {
@@ -531,6 +535,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
     "net_cost_delta": 4978.228076127125,
@@ -582,9 +587,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 5623.148940510582,
+    "net_cost_delta": 5623.148940510815,
     "split": "test"
   },
   {
@@ -631,9 +637,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "fee"
     ],
-    "net_cost_delta": -848.5881821041476,
+    "net_cost_delta": -848.5881821041621,
     "split": "test"
   },
   {
@@ -680,9 +687,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "fee"
     ],
-    "net_cost_delta": -949.6645457875056,
+    "net_cost_delta": -949.6645457875129,
     "split": "tune"
   },
   {
@@ -729,6 +737,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "fee"
     ],
     "net_cost_delta": -1914.1208845897418,
@@ -778,9 +787,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "fee"
     ],
-    "net_cost_delta": -2657.525056231192,
+    "net_cost_delta": -2657.5250562311776,
     "split": "test"
   },
   {
@@ -827,6 +837,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "fee"
     ],
     "net_cost_delta": -1559.3543952685504,
@@ -876,6 +887,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "fee"
     ],
     "net_cost_delta": -1891.0754832444873,
@@ -925,6 +937,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "utilisation"
     ],
     "net_cost_delta": -254.42350147413526,
@@ -974,6 +987,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "utilisation"
     ],
     "net_cost_delta": -297.107616051253,
@@ -1023,6 +1037,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "utilisation"
     ],
     "net_cost_delta": -240.1144999816388,
@@ -1072,9 +1087,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "utilisation"
     ],
-    "net_cost_delta": -279.8129803111151,
+    "net_cost_delta": -279.8129803111078,
     "split": "tune"
   },
   {
@@ -1121,6 +1137,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "utilisation"
     ],
     "net_cost_delta": -236.82561346836155,
@@ -1170,6 +1187,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "utilisation"
     ],
     "net_cost_delta": -270.1149233527758,
@@ -1512,9 +1530,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 85.20167310882243,
+    "net_cost_delta": 85.20167310885154,
     "split": "validation"
   },
   {
@@ -1560,6 +1579,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
     "net_cost_delta": 1057.495354278275,
@@ -1608,9 +1628,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 676.2538872624864,
+    "net_cost_delta": 676.2538872625009,
     "split": "tune"
   },
   {
@@ -1656,9 +1677,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 537.8363738866465,
+    "net_cost_delta": 537.8363738866319,
     "split": "validation"
   },
   {
@@ -1704,9 +1726,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 473.509831386109,
+    "net_cost_delta": 473.50983138609445,
     "split": "test"
   },
   {
@@ -1752,9 +1775,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 1021.1609171593009,
+    "net_cost_delta": 1021.1609171593154,
     "split": "tune"
   },
   {
@@ -1803,9 +1827,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": -79.74562983680516,
+    "net_cost_delta": -1.8015760807320476,
     "split": "validation"
   },
   {
@@ -1854,9 +1879,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 2283.2454574638978,
+    "net_cost_delta": 2363.288618816063,
     "split": "test"
   },
   {
@@ -1905,9 +1931,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": -1417.9328598449938,
+    "net_cost_delta": -1384.544447327964,
     "split": "tune"
   },
   {
@@ -1956,9 +1983,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 1487.4488886436448,
+    "net_cost_delta": 1630.9318592408672,
     "split": "validation"
   },
   {
@@ -2007,9 +2035,10 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
-    "net_cost_delta": 3552.5962955681607,
+    "net_cost_delta": 3552.596295569092,
     "split": "test"
   },
   {
@@ -2058,6 +2087,7 @@
     "monthly_surplus": 15000.0,
     "has_divergence": true,
     "mechanisms": [
+      "displaced",
       "tax"
     ],
     "net_cost_delta": -587.635876624845,

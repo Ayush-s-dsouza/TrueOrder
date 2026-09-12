@@ -50,12 +50,51 @@ class FeeAdjustmentResult:
     note: str
 
 
+# How many months a debt would take to retire on its MINIMUM PAYMENT ALONE.
+# This is the shared definition of "when would this loan have ended anyway",
+# and both stages that care about foreclosure now key off it:
+#   - fee_rules/adjust annualizes the one-time charge over this horizon
+#   - impact charges the fee iff actual payoff lands BEFORE this month
+#
+# It exists because `remaining_tenure_months` is a free-floating stated
+# field with no schema constraint tying it to balance/minimum_payment/APR,
+# so it can contradict the loan's actual cash flows. Keying the two stages
+# off that field independently made them disagree systematically: the
+# shorter the stated tenure, the MORE adjust.py inflated the rate, while
+# impact.py became LESS likely to ever charge the fee (a 1-month stated
+# tenure produced a +60pp rate penalty for a fee the simulation then
+# charged at Rs 0). Deriving the horizon from the same cash flows both
+# stages already simulate removes that contradiction at its source.
+#
+# Foreclosure means "retired sooner than it otherwise would have been",
+# which is this quantity -- not "sooner than a stated schedule field says".
+MAX_PAYOFF_HORIZON_MONTHS = 600
+
+
+def natural_payoff_months(
+    *, outstanding_balance: float, stated_apr_pct: float, minimum_payment: float
+) -> int | None:
+    """Months to retire this debt on its minimum payment alone, or None if
+    it never amortizes (minimum payment never exceeds accruing interest).
+    Deliberately mirrors impact.py's own per-month arithmetic (accrue, then
+    pay) so the two stages cannot drift apart on rounding."""
+    balance = outstanding_balance
+    monthly_rate = stated_apr_pct / 1200
+    for month in range(1, MAX_PAYOFF_HORIZON_MONTHS + 1):
+        balance += balance * monthly_rate
+        balance -= min(minimum_payment, balance)
+        if balance <= 1e-6:
+            return month
+    return None
+
+
 def loan_foreclosure_adjustment(
     *,
     rate_type: str,
     stated_rate_pct: float,
     foreclosure_charge_pct: float | None,
-    remaining_tenure_months: int,
+    outstanding_balance: float,
+    minimum_payment: float,
 ) -> FeeAdjustmentResult:
     """Applies to personal, home, and auto loans (term loans with a
     foreclosure concept). Not applicable to credit cards -- see
@@ -80,18 +119,47 @@ def loan_foreclosure_adjustment(
         "fixed-rate loan must carry foreclosure_charge_pct -- schema.py should "
         "have rejected this input before it reached fee_rules.py"
     )
-    remaining_tenure_years = remaining_tenure_months / 12
-    annualized_charge_pct = foreclosure_charge_pct / remaining_tenure_years
+    natural_months = natural_payoff_months(
+        outstanding_balance=outstanding_balance,
+        stated_apr_pct=stated_rate_pct,
+        minimum_payment=minimum_payment,
+    )
+
+    if natural_months is not None and natural_months <= 1:
+        # The loan retires next month on its minimum payment alone: there is
+        # no acceleration window, so there is nothing to foreclose. impact.py
+        # agrees (payoff can never land strictly before month 1), so both
+        # stages report no charge rather than contradicting each other.
+        return FeeAdjustmentResult(
+            foreclosure_adjusted_rate_pct=stated_rate_pct,
+            note=(
+                f"Fixed-rate loan carrying a stated {foreclosure_charge_pct:.2f}% "
+                f"foreclosure charge, but its minimum payment alone retires it "
+                f"within a month -- there is no early-payoff window left to "
+                f"foreclose, so no charge can be incurred. Rate unchanged."
+            ),
+        )
+
+    horizon_months = natural_months if natural_months is not None else MAX_PAYOFF_HORIZON_MONTHS
+    horizon_years = horizon_months / 12
+    annualized_charge_pct = foreclosure_charge_pct / horizon_years
     adjusted_rate = stated_rate_pct + annualized_charge_pct
+    never_note = (
+        ""
+        if natural_months is not None
+        else " (its minimum payment never amortizes the balance, so the horizon is "
+        f"capped at {MAX_PAYOFF_HORIZON_MONTHS} months)"
+    )
     return FeeAdjustmentResult(
         foreclosure_adjusted_rate_pct=adjusted_rate,
         note=(
             f"Fixed-rate loan: RBI's floating-rate prohibition does not apply, so "
             f"the lender's stated {foreclosure_charge_pct:.2f}% foreclosure charge "
-            f"applies. Annualized over the {remaining_tenure_years:.1f} remaining "
-            f"years of tenure, this adds {annualized_charge_pct:.2f} percentage "
-            f"points to the effective rate ({stated_rate_pct:.2f}% -> "
-            f"{adjusted_rate:.2f}%)."
+            f"applies if it is paid off early. Annualized over the "
+            f"{horizon_years:.1f} years this loan would otherwise take to retire "
+            f"on its minimum payment alone{never_note}, this adds "
+            f"{annualized_charge_pct:.2f} percentage points to the effective rate "
+            f"({stated_rate_pct:.2f}% -> {adjusted_rate:.2f}%)."
         ),
     )
 

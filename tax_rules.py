@@ -38,15 +38,37 @@ from dataclasses import dataclass
 #   income is available, which this module does not model as a current-year
 #   benefit.
 #
-# Sources (verified 2026-09-06):
+# Section 24(a) -- the 30% standard deduction on a LET-OUT property's Net
+# Annual Value -- is modeled too, and matters here for a non-obvious reason.
+# It is NOT a benefit attributable to the loan (it accrues to owning a
+# let-out property whether or not it is mortgaged), so it is never added to
+# this module's `deductible_amount`. What it does do is REDUCE how much
+# rental income is available to absorb the interest: the absorption
+# capacity is 0.70 x NAV, not gross rent. Omitting it silently overstated
+# the loan's deductible whenever the Rs 2L set-off cap binds -- by
+# Rs 30,000 (11.1%) on this project's own sample 7 (see DECISIONS.md).
+# 24(a) applies to let-out property in BOTH regimes; the new regime's
+# restrictions target 24(b) on self-occupied property, not 24(a).
+# It is NOT available for a self-occupied property at all, so the
+# self-occupied branches below are unaffected.
+#
+# `annual_rental_income` is taken to be the Net Annual Value, i.e. already
+# net of municipal taxes paid. Municipal taxes are not separately modeled --
+# a disclosed simplification, not an oversight.
+#
+# Sources (verified 2026-09-06; Sec 24(a) re-verified 2026-09-11):
 #   https://www.bajajfinserv.in/tax-deduction-on-home-loan-interest-under-section-24
 #   https://www.kotaklife.com/insurance-guide/savingstax/section-24-in-new-tax-regime
 #   https://www.taxbuddy.com/blog/house-property-loss-set-off  (Sec 71(3A), AY 2025-26)
 #   https://www.patronaccounting.com/blog/house-property-loss-set-off-rs-2-lakh-cap-old-regime
+#   https://cleartax.in/s/deductions-under-section24-income-from-house-property  (Sec 24(a), 30% of NAV, let-out only)
+#   https://callmyca.com/blog/section-24-a-of-the-income-tax-act  (Sec 24(a) standard deduction explained)
+#   https://taxgarden.in/blog/deductions-allowed-new-tax-regime-section-115bac-ay-2026-27  (24(a) survives under 115BAC for let-out)
 # ---------------------------------------------------------------------------
 
 SELF_OCCUPIED_DEDUCTION_CAP_OLD_REGIME = 200_000.0
 LET_OUT_LOSS_SETOFF_CAP_OLD_REGIME = 200_000.0
+LET_OUT_STANDARD_DEDUCTION_RATE = 0.30  # Section 24(a), let-out property only
 
 EDUCATION_LOAN_80E_WINDOW_YEARS = 8
 
@@ -101,7 +123,11 @@ def home_loan_deduction(
         "let_out home loan must carry annual_rental_income -- schema.py should "
         "have rejected this input before it reached tax_rules.py"
     )
-    rental_offset = min(annual_interest, annual_rental_income)
+    # Section 24(a): only 70% of the Net Annual Value is left to absorb
+    # interest, since 30% comes off first as the standard deduction.
+    standard_deduction = annual_rental_income * LET_OUT_STANDARD_DEDUCTION_RATE
+    net_rental_income = annual_rental_income - standard_deduction
+    rental_offset = min(annual_interest, net_rental_income)
     remaining_loss = annual_interest - rental_offset
 
     if regime == "old":
@@ -110,10 +136,14 @@ def home_loan_deduction(
         return DeductionResult(
             deductible_amount=deductible,
             note=(
-                f"Section 24(b), old regime, let-out: Rs {rental_offset:,.0f} "
-                f"deducted against rental income (uncapped), plus Rs {loss_setoff:,.0f} "
-                f"of the resulting loss set off against other income under Section "
-                f"71(3A) (capped at Rs {LET_OUT_LOSS_SETOFF_CAP_OLD_REGIME:,.0f}/year). "
+                f"Section 24(b), old regime, let-out: rental income of "
+                f"Rs {annual_rental_income:,.0f} less the Section 24(a) "
+                f"{LET_OUT_STANDARD_DEDUCTION_RATE:.0%} standard deduction "
+                f"(Rs {standard_deduction:,.0f}) leaves Rs {net_rental_income:,.0f} to "
+                f"absorb interest, of which Rs {rental_offset:,.0f} is used (uncapped), "
+                f"plus Rs {loss_setoff:,.0f} of the resulting loss set off against "
+                f"other income under Section 71(3A) (capped at "
+                f"Rs {LET_OUT_LOSS_SETOFF_CAP_OLD_REGIME:,.0f}/year). "
                 f"Deductible amount this year: Rs {deductible:,.0f}."
             ),
         )
@@ -122,8 +152,12 @@ def home_loan_deduction(
     return DeductionResult(
         deductible_amount=rental_offset,
         note=(
-            f"Section 24(b), new regime, let-out: Rs {rental_offset:,.0f} deducted "
-            f"against rental income (uncapped, still allowed for let-out under the "
+            f"Section 24(b), new regime, let-out: rental income of "
+            f"Rs {annual_rental_income:,.0f} less the Section 24(a) "
+            f"{LET_OUT_STANDARD_DEDUCTION_RATE:.0%} standard deduction "
+            f"(Rs {standard_deduction:,.0f}) leaves Rs {net_rental_income:,.0f} to "
+            f"absorb interest, of which Rs {rental_offset:,.0f} is deducted "
+            f"(uncapped, still allowed for let-out under the "
             f"new regime). The remaining Rs {remaining_loss:,.0f} of interest cannot "
             f"be set off against other income at all under the new regime (Section "
             f"115BAC blocks inter-head set-off entirely) -- only carried forward "

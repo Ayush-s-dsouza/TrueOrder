@@ -22,8 +22,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 
 from adjust import adjust_portfolio
 from impact import compare_impact
@@ -38,7 +38,16 @@ app = FastAPI(
 
 class AssessRequest(BaseModel):
     portfolio: Portfolio
-    monthly_surplus: float
+    # ge=0: zero surplus is legitimate (pay minimums only), but a NEGATIVE
+    # surplus is not a scenario -- and left unconstrained it was silently
+    # absorbed as zero by the waterfall's `if remaining_surplus <= 0: break`,
+    # returning a confident HTTP 200 plan computed from an input that made
+    # no sense. That is exactly the "silently default instead of raise"
+    # failure this project's schema validators exist to prevent, and it was
+    # sitting on the one public-facing surface. No upper bound: an
+    # arbitrarily large surplus just clears everything in month one, which
+    # is correct.
+    monthly_surplus: float = Field(ge=0)
     explain: bool = False
 
 
@@ -58,7 +67,25 @@ def health() -> dict:
 def assess(request: AssessRequest) -> AssessResponse:
     adjusted_debts = adjust_portfolio(request.portfolio)
     ordering = compute_ordering(request.portfolio, adjusted_debts)
-    impact = compare_impact(request.portfolio, ordering, request.monthly_surplus)
+
+    # A portfolio whose minimum payments never outpace its own interest
+    # cannot be paid off at all, and impact.py raises rather than looping
+    # forever. That is a legitimate thing for a real borrower to be in --
+    # genuinely underwater -- not a server fault, so it must not surface as
+    # an unhandled 500. Reported as a 422 with the same shape as a
+    # validation failure: the input is well-formed but not satisfiable.
+    try:
+        impact = compare_impact(request.portfolio, ordering, request.monthly_surplus)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "This portfolio cannot be paid off from the monthly surplus provided -- "
+                "its minimum payments do not outpace the interest accruing on it. "
+                "Increase monthly_surplus, or reduce the balances/rates, and try again. "
+                f"({exc})"
+            ),
+        ) from exc
 
     explanation = None
     if request.explain:

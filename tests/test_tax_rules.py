@@ -14,6 +14,8 @@ equivalent gap on the fee-rule side).
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 import tax_rules
@@ -150,7 +152,12 @@ def test_letout_home_loan_with_loss_over_2l_cap_carries_forward_the_excess():
         annual_rental_income=home_loan.annual_rental_income,
     )
 
-    rental_offset = min(annual_interest, home_loan.annual_rental_income)
+    # Absorption capacity is the POST-Section-24(a) figure (0.70 x NAV), not
+    # gross rent -- mirroring tax_rules.py. Reconstructing it from gross rent
+    # here would still satisfy the assertions below (the term cancels), but
+    # would quietly document a calculation the code no longer performs.
+    net_rental_income = home_loan.annual_rental_income * (1 - tax_rules.LET_OUT_STANDARD_DEDUCTION_RATE)
+    rental_offset = min(annual_interest, net_rental_income)
     remaining_loss = annual_interest - rental_offset
     carried_forward = remaining_loss - (result.deductible_amount - rental_offset)
     deductible_fraction = result.deductible_amount / annual_interest
@@ -159,3 +166,64 @@ def test_letout_home_loan_with_loss_over_2l_cap_carries_forward_the_excess():
     assert deductible_fraction < 1.0
     assert carried_forward > 0
     assert carried_forward == pytest.approx(annual_interest - result.deductible_amount)
+
+
+def test_sample_7_note_states_the_post_24a_deductible_and_cites_24a():
+    """Guards a specific class of drift: correct numeric fields sitting next
+    to stale prose reasoning. When Section 24(a) was added, sample 7's
+    deductible moved Rs 300,000 -> Rs 270,000; a note still saying
+    "Rs 300,000", or still explaining the result purely via 24(b)/71(3A)
+    with no mention of the standard deduction that actually drove it, would
+    be just as wrong as a wrong number -- and far harder to notice, since
+    every numeric assertion in the suite would still pass.
+
+    Pinned to sample 7 specifically because it is the one committed sample
+    where the Rs 2L cap binds, which is the only regime in which 24(a)
+    changes the answer at all."""
+    portfolio = generate_portfolio(SEED, "letout_home_old_regime_loss_capped", index=0)
+    [home_loan_adjusted] = [
+        ad for ad in adjust_portfolio(portfolio) if ad.debt.debt_id == "h1"
+    ]
+    note = home_loan_adjusted.tax_adjustment_note
+
+    assert "270,000" in note, f"note does not state the post-24(a) deductible: {note}"
+    assert "300,000" not in note, f"note still states the pre-24(a) deductible: {note}"
+    assert "24(a)" in note, f"note does not cite Section 24(a): {note}"
+    assert "30% standard deduction" in note, f"note does not explain the 30% standard deduction: {note}"
+
+
+@pytest.mark.parametrize(
+    "regime,occupancy,rental,interest",
+    [
+        ("old", "let_out", 100_000.0, 800_000.0),   # cap binds
+        ("old", "let_out", 350_000.0, 426_828.0),   # cap does not bind
+        ("new", "let_out", 100_000.0, 800_000.0),   # no inter-head set-off
+        ("old", "self_occupied", None, 800_000.0),  # flat Rs 2L cap
+        ("new", "self_occupied", None, 800_000.0),  # fully blocked
+    ],
+)
+def test_every_note_agrees_with_its_own_deductible_amount(regime, occupancy, rental, interest):
+    """The general invariant behind the sample-7 test above: a note either
+    states a deductible figure that MATCHES the numeric field beside it, or
+    says no deduction applies and the field is zero. Nothing in between.
+
+    This is what actually makes prose/number drift impossible to reintroduce
+    quietly -- a future edit that changes the calculation but not the note
+    (or vice versa) fails here regardless of which specific values are
+    involved, without anyone having to remember to update a hardcoded
+    expectation."""
+    result = tax_rules.home_loan_deduction(
+        regime=regime, occupancy=occupancy, annual_interest=interest, annual_rental_income=rental
+    )
+    stated = re.search(r"Deductible amount this year: Rs ([\d,]+)", result.note)
+
+    if stated is None:
+        assert result.deductible_amount == 0.0, (
+            f"note states no deductible figure but deductible_amount is "
+            f"{result.deductible_amount}: {result.note}"
+        )
+        assert "No deduction applies" in result.note
+    else:
+        assert float(stated.group(1).replace(",", "")) == pytest.approx(
+            result.deductible_amount, abs=1.0
+        ), f"note says Rs {stated.group(1)} but deductible_amount is {result.deductible_amount}"

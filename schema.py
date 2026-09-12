@@ -80,7 +80,14 @@ class ForeclosureFieldsMixin(BaseModel):
     coerced into "no charge" or "no adjustment"."""
 
     rate_type: RateType
-    foreclosure_charge_pct: float | None = Field(default=None, ge=0)
+    # le=100: a foreclosure charge is a percentage OF the outstanding
+    # balance, so a value above 100 would mean the fee exceeds the entire
+    # debt -- physically meaningless, and it would silently produce a
+    # confident, wildly wrong surcharge rather than a validation error.
+    # Real post-RBI charges sit around 2-5%; the bound is deliberately the
+    # physically-meaningful limit rather than a market-typical one, so an
+    # unusual-but-real product isn't rejected.
+    foreclosure_charge_pct: float | None = Field(default=None, ge=0, le=100)
 
     @model_validator(mode="after")
     def _foreclosure_charge_matches_rate_type(self) -> "ForeclosureFieldsMixin":
@@ -242,10 +249,20 @@ class AdjustedDebt(BaseModel):
 #                  `traded_for` states the real, non-rupee reason instead.
 #                  A small real rupee cost from this trade in a waterfall
 #                  is the expected price of the trade, never a failure.
+#   - DISPLACED:   NOT a fourth objective -- the explicit absence of one.
+#                  This debt's rank moved only because a neighbour was
+#                  promoted past it; it has no adjustment of its own.
+#                  net_rupee_effect is always exactly 0.0 and `displaced_by`
+#                  names the debt that actually moved. It exists because
+#                  borrowing the causing debt's mechanism produced labels
+#                  that were simply false -- a credit card tagged
+#                  mechanism="fee" when fee_rules.py says foreclosure
+#                  charges cannot apply to a revolving facility at all.
 # Getting this wrong at the explanation layer -- stating a utilisation
-# promotion as a "cost saving," for instance -- is a category error about
-# what kind of claim is being made, worse than a wrong number, and is
-# exactly what the eval (built later) is designed to catch.
+# promotion as a "cost saving," or a displaced debt as though it had a
+# reason of its own -- is a category error about what kind of claim is
+# being made, worse than a wrong number, and is exactly what the eval is
+# designed to catch.
 # ---------------------------------------------------------------------------
 
 
@@ -253,6 +270,16 @@ class DivergenceMechanism(str, Enum):
     TAX = "tax"
     FEE = "fee"
     UTILISATION = "utilisation"
+    # DISPLACED is not a fourth objective -- it is the explicit absence of
+    # one. A debt whose rank moved only because a NEIGHBOUR was promoted
+    # past it has no adjustment of its own at all. It previously borrowed
+    # the causing debt's mechanism, which produced genuinely false labels:
+    # a credit card could come out tagged mechanism="fee" even though
+    # fee_rules.py states in terms that foreclosure charges do not apply to
+    # a revolving facility. Handing that to the explanation layer invites
+    # exactly the category error this whole schema exists to prevent, so
+    # displacement now says what it actually is and names its cause.
+    DISPLACED = "displaced"
 
 
 class DivergenceRationale(BaseModel):
@@ -268,6 +295,7 @@ class DivergenceRationale(BaseModel):
     mechanism: DivergenceMechanism
     net_rupee_effect: float
     traded_for: str | None = None
+    displaced_by: str | None = None
 
     @model_validator(mode="after")
     def _traded_for_only_for_utilisation(self) -> "DivergenceRationale":
@@ -283,6 +311,29 @@ class DivergenceRationale(BaseModel):
                 f"traded_for is only meaningful for the utilisation mechanism (it exists to "
                 f"flag a non-rupee trade-off); a {self.mechanism.value} rationale is a rupee "
                 f"claim on its own and must not carry one"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _displaced_by_only_for_displaced(self) -> "DivergenceRationale":
+        if self.mechanism == DivergenceMechanism.DISPLACED:
+            if self.displaced_by is None:
+                raise ValueError(
+                    "a displaced rationale must name the debt that displaced it -- "
+                    "'this debt moved, for no reason of its own' is not an explanation, "
+                    "and the causing debt is the only thing that makes it one"
+                )
+            if self.net_rupee_effect != 0.0:
+                raise ValueError(
+                    f"a displaced debt has no adjustment of its own, so its net_rupee_effect "
+                    f"must be exactly 0.0, got {self.net_rupee_effect}; a nonzero value here "
+                    f"means it should have been attributed to its own mechanism instead"
+                )
+        elif self.displaced_by is not None:
+            raise ValueError(
+                f"displaced_by is only meaningful for the displaced mechanism; a "
+                f"{self.mechanism.value} rationale describes this debt's OWN adjustment "
+                f"and must not also claim something else moved it"
             )
         return self
 

@@ -9,12 +9,14 @@ schema.py's DivergenceMechanism/DivergenceRationale and sequence.py's
 compute_divergence_rationale) -- this project's single most important
 distinction (see DECISIONS.md) is that a divergence is never left as a bare
 rank change with no stated reason, and the reason is never a generic
-"cheaper," but one of three specific, differently-shaped claims: tax
+"cheaper," but one of several specific, differently-shaped claims: tax
 (mechanically cheaper when the deductible fraction is constant over the
 debt's life -- NOT a universal guarantee, see test_impact.py's capped-
 fraction correction for when it isn't), fee (a ranking justification, not
 a savings guarantee -- can go either way in a real waterfall, see
-test_impact.py), or utilisation (explicitly not a rupee claim at all).
+test_impact.py), utilisation (explicitly not a rupee claim at all), or
+displaced (no claim about this debt at all -- it moved only because a
+neighbour was promoted past it, and `displaced_by` names which one).
 This test file only checks ATTRIBUTION correctness (is h1 correctly
 tagged as a tax mechanism, with a positive rupee effect) -- whether that
 mechanism's real waterfall outcome is unconditionally favorable is
@@ -72,10 +74,12 @@ def test_letout_home_old_regime_diverges_on_tax():
     assert ordering.divergence_rationale["h1"].traded_for is None
 
     # pl1 has no adjustment of its own -- it was passively displaced by h1's
-    # tax-driven promotion, so it borrows h1's mechanism with zero effect.
-    assert ordering.divergence_rationale["pl1"].mechanism == DivergenceMechanism.TAX
+    # tax-driven promotion. It is NOT tagged "tax": it has no tax deduction,
+    # and borrowing h1's label would assert something false about it.
+    assert ordering.divergence_rationale["pl1"].mechanism == DivergenceMechanism.DISPLACED
     assert ordering.divergence_rationale["pl1"].net_rupee_effect == 0.0
     assert ordering.divergence_rationale["pl1"].traded_for is None
+    assert ordering.divergence_rationale["pl1"].displaced_by == "h1"
 
 
 def test_fixed_auto_foreclosure_diverges_on_fees():
@@ -92,8 +96,11 @@ def test_fixed_auto_foreclosure_diverges_on_fees():
     assert ordering.divergence_rationale["a1"].net_rupee_effect < 0
     assert ordering.divergence_rationale["a1"].traded_for is None
 
-    assert ordering.divergence_rationale["pl1"].mechanism == DivergenceMechanism.FEE
+    # pl1 is floating-rate: fee_rules says no foreclosure charge can apply
+    # to it at all, so tagging it "fee" would have been a false label.
+    assert ordering.divergence_rationale["pl1"].mechanism == DivergenceMechanism.DISPLACED
     assert ordering.divergence_rationale["pl1"].net_rupee_effect == 0.0
+    assert ordering.divergence_rationale["pl1"].displaced_by == "a1"
 
 
 def test_utilisation_threshold_diverges_on_heuristic():
@@ -102,18 +109,28 @@ def test_utilisation_threshold_diverges_on_heuristic():
     assert ordering.adjusted_order == ["cc1", "cc2", "pl1"]
     assert set(ordering.divergence_points) == {"cc2", "pl1"}
 
-    # Both entries: mechanism=utilisation, net_rupee_effect exactly 0.0 (no
-    # tax/fee adjustment fires for either debt), and traded_for MUST be
-    # populated -- this is the one mechanism that is explicitly not a
-    # cost-savings claim, enforced by schema.py's own validator, not just
-    # by convention here.
-    for debt_id in ("cc2", "pl1"):
-        rationale = ordering.divergence_rationale[debt_id]
-        assert rationale.mechanism == DivergenceMechanism.UTILISATION
-        assert rationale.net_rupee_effect == 0.0
-        assert rationale.traded_for is not None
-        assert "credit score" in rationale.traded_for.lower()
-        assert "rupee" in rationale.traded_for.lower()
+    # cc2 is the debt actually making the utilisation move: net_rupee_effect
+    # exactly 0.0 (no tax/fee adjustment fires for a credit card), and
+    # traded_for MUST be populated -- this is the one mechanism that is
+    # explicitly not a cost-savings claim, enforced by schema.py's own
+    # validator, not just by convention here.
+    cc2_rationale = ordering.divergence_rationale["cc2"]
+    assert cc2_rationale.mechanism == DivergenceMechanism.UTILISATION
+    assert cc2_rationale.net_rupee_effect == 0.0
+    assert cc2_rationale.traded_for is not None
+    assert "credit score" in cc2_rationale.traded_for.lower()
+    assert "rupee" in cc2_rationale.traded_for.lower()
+    assert cc2_rationale.displaced_by is None
+
+    # pl1 is a PERSONAL LOAN -- it has no utilisation dimension whatsoever
+    # (utilisation is a credit-card concept). Labelling it "utilisation"
+    # with a credit-score traded_for, as the borrowing scheme used to, told
+    # the explanation layer something categorically untrue about it.
+    pl1_rationale = ordering.divergence_rationale["pl1"]
+    assert pl1_rationale.mechanism == DivergenceMechanism.DISPLACED
+    assert pl1_rationale.net_rupee_effect == 0.0
+    assert pl1_rationale.traded_for is None
+    assert pl1_rationale.displaced_by == "cc2"
 
 
 def test_selfoccupied_new_regime_regression_has_no_divergence():
@@ -131,8 +148,9 @@ def test_education_loan_80e_old_regime_diverges_on_tax():
 
     assert ordering.divergence_rationale["e1"].mechanism == DivergenceMechanism.TAX
     assert ordering.divergence_rationale["e1"].net_rupee_effect > 0
-    assert ordering.divergence_rationale["pl1"].mechanism == DivergenceMechanism.TAX
+    assert ordering.divergence_rationale["pl1"].mechanism == DivergenceMechanism.DISPLACED
     assert ordering.divergence_rationale["pl1"].net_rupee_effect == 0.0
+    assert ordering.divergence_rationale["pl1"].displaced_by == "e1"
 
 
 def test_compound_tax_and_fee_on_the_same_debt_raises_through_the_real_pipeline():

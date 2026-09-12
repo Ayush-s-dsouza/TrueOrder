@@ -23,6 +23,22 @@ that no contradicting claim exists elsewhere in the same explanation). A
 model-graded judge would close that gap; it's out of scope for this phase,
 named here rather than silently assumed away.
 
+THE REPORTED RATE IS A LOWER BOUND, and that is a structural property of
+the approach rather than a caveat about this particular run. Across two
+full collection runs, ELEVEN separate defects were found in these
+heuristics, and every single one was a FALSE NEGATIVE -- a correct, honest
+explanation scored as a failure (sign-blind number matching, negation-blind
+claim detection, an order check anchored to the wrong occurrence, and
+repeatedly, an admission phrasing nobody had enumerated yet: "costs
+slightly more", "costs about Rs 1,417.93 more", "the net cost rises to",
+"Rs 587.64 above the naive order's", "costs you an extra Rs 240.11"). Not
+one was a false positive letting a bad explanation through. That asymmetry
+is not luck: matching a finite list of phrasings can only ever miss ways of
+saying a true thing, never invent evidence for a false one. So the honest
+reading of any number here is "at least this faithful" -- the true rate is
+this or higher, and the way to actually close the gap is a model-graded
+judge, not a longer regex.
+
     python -m eval.metrics --experiment baseline
 """
 
@@ -63,8 +79,19 @@ COSTLIER_ADMISSION_PATTERN = re.compile(
     # because a rupee figure's "." and "," aren't \w characters, so a
     # word-boundary-based token count silently undercounts them. A
     # character-based gap sidesteps punctuation entirely (see DECISIONS.md).
-    r"cost(?:s|ing)?\s+.{0,30}?\bmore\b|more expensive|costlier|does\s+not\s+come\s+for\s+free|"
-    r"higher\s+(?:net\s+)?cost|extra\s+(?:rupee|cost|money)",
+    # The re-run after fixes 1/2/4 surfaced four MORE correct, honest
+    # admissions this pattern missed: "the net cost RISES to Rs 52,354.68",
+    # "Rs 587.64 ABOVE the naive order's", "Rs 270.11 HIGHER than the
+    # naive net_cost", and "costs you an EXTRA Rs 240.11". Enumerating
+    # phrasings is inherently incomplete -- see this module's docstring on
+    # why the reported rate is therefore a LOWER BOUND -- so the comparative
+    # family (more/higher/above/rises/increases/greater/exceeds/extra) is
+    # matched near a cost word rather than one phrasing at a time.
+    r"cost(?:s|ing)?\s+.{0,30}?\b(?:more|less\b(?!)|greater)\b|"
+    r"\b(?:more expensive|costlier)\b|does\s+not\s+come\s+for\s+free|"
+    r"\b(?:higher|above|greater|exceeds?|rises?|risen|increases?)\b.{0,40}?\b(?:cost|naive|than)\b|"
+    r"\bcost\b.{0,40}?\b(?:higher|above|greater|exceeds?|rises?|risen|increases?)\b|"
+    r"\bextra\b.{0,20}?\b(?:rupee|cost|money|Rs)\b|\bextra\s+Rs\b",
     re.IGNORECASE,
 )
 CREDIT_SCORE_LANGUAGE_PATTERN = re.compile(r"credit score|cibil|utilisation|utilization", re.IGNORECASE)
@@ -153,26 +180,44 @@ def all_debts_mentioned(text: str, gt: CaseGroundTruth) -> bool:
 SEQUENCE_MAX_GAP = 80
 
 
-def _debt_id_occurrence_sequence(text: str, all_ids: list[str]) -> list[tuple[int, str]]:
-    occurrences: list[tuple[int, str]] = []
-    for debt_id in all_ids:
-        start = 0
-        while True:
-            idx = text.find(debt_id, start)
-            if idx == -1:
-                break
-            occurrences.append((idx, debt_id))
-            start = idx + len(debt_id)
-    occurrences.sort()
-    # Collapse immediately-repeated mentions of the same debt into one slot
-    # (e.g. "cc1 ... your credit card (cc1) again" shouldn't count as two
-    # slots in a sequence listing).
-    collapsed: list[tuple[int, str]] = []
-    for pos, debt_id in occurrences:
-        if collapsed and collapsed[-1][1] == debt_id:
-            continue
-        collapsed.append((pos, debt_id))
-    return collapsed
+def _occurrences(text: str, debt_id: str) -> list[int]:
+    positions, start = [], 0
+    while True:
+        idx = text.find(debt_id, start)
+        if idx == -1:
+            return positions
+        positions.append(idx)
+        start = idx + len(debt_id)
+
+
+def _sequence_appears(text: str, order: list[str], max_gap: int) -> bool:
+    """True if `order`'s debt IDs appear in that exact sequence somewhere in
+    the text, each within `max_gap` characters of the previous one.
+
+    Backtracking rather than greedy-nearest, and deliberately NOT built on a
+    collapsed occurrence list. An earlier version collapsed consecutive
+    mentions of the same id into one slot keeping the FIRST position, which
+    discarded exactly the later, closer mention that would have matched --
+    a real explanation reading "...your credit card (cc1) belongs at the top
+    [~90 chars of clause] ... Its adjusted repayment order is cc1, then pl1,
+    then e1" was scored wrong because the run was anchored to the FIRST cc1.
+    Greedy-nearest has the same class of flaw one step further in, so the
+    search tries every candidate."""
+    positions = {debt_id: _occurrences(text, debt_id) for debt_id in order}
+
+    def walk(index: int, previous_pos: int) -> bool:
+        if index == len(order):
+            return True
+        for pos in positions[order[index]]:
+            if pos <= previous_pos:
+                continue
+            if previous_pos >= 0 and pos - previous_pos > max_gap:
+                break  # positions are sorted; everything later is further
+            if walk(index + 1, pos):
+                return True
+        return False
+
+    return walk(0, -1)
 
 
 def adjusted_order_sequence_correct(text: str, gt: CaseGroundTruth) -> Optional[bool]:
@@ -193,16 +238,7 @@ def adjusted_order_sequence_correct(text: str, gt: CaseGroundTruth) -> Optional[
     reading is correct."""
     if not all_debts_mentioned(text, gt):
         return None
-    order = gt.ordering.adjusted_order
-    seq = _debt_id_occurrence_sequence(text, [d.debt_id for d in gt.portfolio.debts])
-    n = len(order)
-    for i in range(len(seq) - n + 1):
-        window = seq[i : i + n]
-        if [debt_id for _, debt_id in window] != order:
-            continue
-        if all(window[j + 1][0] - window[j][0] <= SEQUENCE_MAX_GAP for j in range(n - 1)):
-            return True
-    return False
+    return _sequence_appears(text, gt.ordering.adjusted_order, SEQUENCE_MAX_GAP)
 
 
 def _derived_impact_deltas(gt: CaseGroundTruth) -> list[float]:

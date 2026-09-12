@@ -700,7 +700,7 @@ pipeline, not a side authoring tool, so an API that could never reach it
 would be a materially incomplete implementation of the pipeline this
 project set out to build, not a more disciplined one.
 
-## The held-out test split: opened once, one more metrics bug found, 100% confirmed
+## The held-out test split: first opening, one more metrics bug found, 100% confirmed
 
 Per `eval/splits.py`'s own discipline, the `test` split was opened exactly
 once, at the end, via `load_split('test', allow_test=True)` triggered
@@ -724,7 +724,7 @@ permanent regression test in `tests/test_eval_metrics.py`.
 
 **Decision**: both splits are reported together, honestly, as what they
 are -- **baseline (tune+validation, 58 calls): 100% faithfulness. Held-out
-test (26 calls, opened once): 100% faithfulness**, after the same fix
+test (26 calls, first opening): 100% faithfulness**, after the same fix
 applied to both experiment files. The held-out split's job was to confirm
 the baseline number wasn't an artifact of tuning against the same data
 repeatedly (it wasn't -- no prompt tuning happened between the two runs,
@@ -741,3 +741,199 @@ metrics bug in this project was fixed immediately on discovery regardless
 of which split surfaced it; treating this one differently, right at the
 finish line, would have shipped a known-wrong headline number for no
 reason connected to the actual discipline being protected.
+
+## FOURTH instance of the pattern: ADJUST and IMPACT contradicted each other on foreclosure fees
+
+Found by an independent adversarial audit, not by the eval -- which could
+not have found it, because every `fixed_auto_foreclosure` portfolio in the
+42-case manifest uses `remaining_tenure_months=18`, sitting squarely in the
+regime where the two stages happen to agree.
+
+`remaining_tenure_months` is a free-floating stated field with no schema
+constraint tying it to `outstanding_balance`, `minimum_payment`, or APR, so
+it can contradict the loan's actual cash flows. `adjust.py` annualized the
+one-time foreclosure charge over it; `impact.py` gated the fee on
+`payoff_month < remaining_tenure_months`. Keying off the same unconstrained
+field in two different ways made the stages move in OPPOSITE directions as
+it shrank:
+
+| stated tenure | ADJUST inflated | IMPACT charged |
+|---|---|---|
+| 1 mo | 9.00% -> **69.00%** | **Rs 0.00** |
+| 6 mo | 9.00% -> **19.00%** | **Rs 0.00** |
+| 18 mo | 9.00% -> 12.33% | Rs 1,055.60 |
+
+At a 1-month stated tenure the ranking applied a +60 percentage-point
+penalty for a fee the simulation then never charged -- enough to make a 9%
+auto loan outrank a 42% credit card. Directionally backwards, too: a loan
+about to self-extinguish is precisely the one you should NOT accelerate,
+since waiting avoids the fee entirely.
+
+**Decision**: a foreclosure means "retired sooner than it otherwise would
+have been", so both stages now key off that same derived quantity --
+`fee_rules.natural_payoff_months()`, the month the loan retires on its
+minimum payment alone, computed with arithmetic deliberately mirroring
+`impact.py`'s own monthly loop so the two cannot drift on rounding.
+`loan_foreclosure_adjustment()` annualizes over that horizon and takes
+`outstanding_balance`/`minimum_payment` instead of `remaining_tenure_months`;
+it returns NO charge when the loan retires within a month (no acceleration
+window exists to foreclose, and impact.py agrees since payoff can never
+land before month 1). `impact.py` charges the fee iff payoff lands before
+that same month. Verified: the two stages now agree at stated tenures
+1/2/3/6/18/60, pinned by a parametrized regression test.
+
+The surcharge is now invariant to `remaining_tenure_months` -- deliberately,
+since that field carried no cash-flow information -- while still varying
+20x (0.49pp to 10.0pp) with `minimum_payment`, which does. Confirmed
+explicitly so that "invariance" could not be mistaken for the new formula
+flattening a distinction that should exist.
+
+**Rejected alternative**: making IMPACT charge the fee the way ADJUST
+assumed (i.e. always, on any early payoff relative to the stated field).
+Rejected because the stated field is the unreliable input here; a real
+foreclosure fee is charged once, on genuinely early retirement, which is
+what IMPACT already modeled. The fix belonged on the estimate, not the
+simulation.
+
+## Section 24(a)'s 30% standard deduction was missing from the let-out calculation
+
+Also found by the independent audit. Every individually cited source for
+Section 24(b), 71(3A) and 80E checked out against the code -- but the
+let-out branch computed `rental_offset = min(annual_interest,
+annual_rental_income)` using GROSS rent. Under the Act, a let-out
+property's income is Net Annual Value less a flat 30% standard deduction
+under Section 24(a), and only what remains absorbs interest. Using gross
+rent overstated the absorption capacity, understated the resulting loss,
+and therefore overstated the loan's current-year deductible whenever the
+Rs 2L Section 71(3A) cap binds.
+
+Measured on this project's own sample 7: deductible **Rs 300,000 ->
+Rs 270,000** (-Rs 30,000, -11.1%), after-tax rate 9.89% -> 10.00%,
+net_cost_delta +Rs 7,762.54 -> +Rs 8,214.10. Sample 2 is unchanged, because
+its loss stays under the cap either way -- which is exactly why the gap
+survived: the flagship non-capped sample never exercised it.
+
+**Decision**: `LET_OUT_STANDARD_DEDUCTION_RATE = 0.30` is modeled, with
+sources cited and re-verified 2026-09-11 (including confirmation that
+24(a) survives under 115BAC for let-out property, and does not apply to
+self-occupied property at all, so the self-occupied branches are
+untouched). Critically, 24(a) is NOT added to `deductible_amount`: it is a
+benefit of owning a let-out property, not of the loan, so it reduces the
+rent's capacity to absorb interest without ever being credited to the
+debt's own tax shield. `annual_rental_income` is documented as Net Annual
+Value (already net of municipal taxes); municipal taxes are not separately
+modeled, disclosed as a simplification rather than left implicit.
+
+The central finding survives this correction unchanged: the capped segment
+still splits 3 positive / 3 negative across its 6 manifest indices, and
+both constant-fraction tax segments remain all-positive.
+
+**Rejected alternative**: treating "every cited source is individually
+accurate" as sufficient. It wasn't -- the sources were right and the model
+was still wrong, because a rule that was never cited at all (24(a)) was
+load-bearing. Citation discipline protects against misstating rules you
+know about; it does nothing about the ones you missed.
+
+## Passive displacement is its own mechanism, not a borrowed one
+
+Also from the independent audit. `compute_divergence_rationale` handles two
+kinds of divergent debt: one that moved because of its OWN adjustment, and
+one that moved only because a neighbour was promoted past it. The second
+kind used to BORROW the causing debt's mechanism, with `net_rupee_effect`
+set to 0.0 to signal it had no adjustment itself.
+
+That produced labels that were not merely uninformative but false. A
+credit card displaced by a fixed-rate auto loan came out tagged
+`mechanism="fee"` -- when `fee_rules.py` states in terms that a foreclosure
+charge cannot apply to a revolving facility at all. A personal loan
+displaced by a utilisation-driven card promotion came out tagged
+`mechanism="utilisation"` carrying a credit-score `traded_for`, when a
+personal loan has no utilisation dimension whatsoever. Both are exactly
+the category error this project's whole mechanism split exists to prevent,
+handed directly to the explanation layer as if it were ground truth. The
+7 committed samples hid it because every displaced debt in them happens to
+be a loan displaced by a loan.
+
+**Decision**: `DivergenceMechanism.DISPLACED`, with a new `displaced_by`
+field naming the debt that actually moved. Two validators enforce the
+shape: `displaced_by` is REQUIRED for DISPLACED ("this debt moved, for no
+reason of its own" is not an explanation -- the cause is the only thing
+that makes it one) and FORBIDDEN otherwise; and a DISPLACED rationale must
+have `net_rupee_effect` exactly 0.0, since a nonzero value means it should
+have been attributed to its own mechanism instead. `explain.py`'s
+SYSTEM_PROMPT gains a fourth rule instructing the model to say precisely
+that the debt has no adjustment of its own and name what moved it, and
+explicitly NOT to attribute tax, fee or credit-score reasoning to it.
+
+This is strictly more informative than what it replaced, not just less
+wrong: "pl1 moved down because h1's tax benefit promoted it" is a better
+sentence for a borrower than "pl1: tax, Rs 0.00".
+
+**Rejected alternative**: leaving displaced debts out of
+`divergence_rationale` entirely. Rejected because `RepaymentOrdering`'s own
+validator requires exactly one rationale per divergence point -- a
+divergence with no stated reason is the thing that invariant exists to
+prevent, and "it got displaced, by this debt" IS a reason. Dropping them
+would have traded a false label for a silent gap.
+
+## Re-collecting both eval splits after fixes 1-4, and why the test split was opened a second time
+
+Three of the four audit fixes changed ground truth: the foreclosure-fee
+horizon (adjust and impact now agree), Section 24(a) (let-out deductibles
+moved, e.g. Rs 300,000 -> Rs 270,000 on sample 7), and the DISPLACED
+relabel (every passively-displaced debt now reports differently). The
+committed eval results were generated against the old ground truth and
+immediately went stale -- baseline dropped to 98.3% purely because one
+explanation still quoted `11.67%` where the corrected rate is `11.82%`.
+
+**Decision**: re-collect both splits once, after all four fixes landed
+rather than after each -- intermediate re-runs would have burned API calls
+on states that were about to change again. Old results were moved aside
+first, because `collect.py` is resumable and would otherwise have skipped
+every already-completed row and left the stale explanations in place. New
+totals: 58 calls / 0 errors / Rs 37.29 (baseline), 26 calls / 0 errors /
+Rs 18.48 (held-out).
+
+The held-out split therefore has TWO entries in
+`eval/TEST_SET_ACCESS_LOG.jsonl`, and both README and this file now say so
+instead of claiming it was opened once. The distinction that matters is
+that re-opening was not iteration against test-set feedback: no prompt
+tuning happened between the runs, `eval/experiments.py` was never built,
+and split membership was verified byte-identical across both runs (not
+merely the same 16/13/13 counts -- the same case IDs). The first result
+graded an engine that no longer exists. Hiding the second access would
+have been the actual violation; the log exists to make it visible.
+
+**Rejected alternative**: keeping the first run's numbers and noting the
+code had moved on. Rejected because a committed eval result that no longer
+reproduces against the committed code is worse than no eval result -- it
+invites a reader to trust a number nothing in the repo can regenerate.
+
+## The eval's faithfulness rate is a lower bound, and the error asymmetry is structural
+
+Eleven defects have now been found in `eval/metrics.py`'s own heuristics
+across two collection runs. Every single one was a FALSE NEGATIVE: a
+correct, honest explanation scored as a failure. Sign-blind number
+matching; negation-blind claim detection; an order check anchored to the
+wrong occurrence of a repeated debt ID; and five separate times, an
+admission phrasing nobody had enumerated yet ("costs slightly more", "the
+net cost rises to", "Rs 587.64 above the naive order's", "costs you an
+extra Rs 240.11", "costs you less overall").
+
+Not one was a false positive letting a bad explanation through.
+
+**Decision**: state plainly, in `eval/metrics.py`'s docstring and in the
+README, that the reported rate is a LOWER bound rather than an exact
+measure -- and say why the asymmetry is structural rather than lucky:
+matching a finite list of phrasings can only ever miss ways of saying a
+true thing, never manufacture evidence for a false one. The honest reading
+of any number here is "at least this faithful". Closing the residual gap
+requires a model-graded judge, which is named as out of scope rather than
+quietly wished away.
+
+**Rejected alternative**: continuing to patch phrasings until a run comes
+back clean and reporting the number as exact. Rejected because the eleventh
+false negative is strong evidence there is a twelfth; presenting a
+regex-graded score as a precise measurement would overstate the
+instrument, which is the same class of error -- claiming more precision
+than the method supports -- that this project exists to catch elsewhere.

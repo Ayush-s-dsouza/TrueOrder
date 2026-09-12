@@ -130,3 +130,46 @@ def test_happy_paths_construct_without_raising():
         occupancy=PropertyOccupancy.LET_OUT,
         annual_rental_income=200_000,
     )
+
+
+def test_displaced_rationale_requires_naming_its_cause():
+    """'This debt moved, for no reason of its own' is not an explanation.
+    The causing debt is the only thing that makes it one, so DISPLACED
+    without displaced_by must not be constructible."""
+    with pytest.raises(ValidationError):
+        DivergenceRationale(mechanism=DivergenceMechanism.DISPLACED, net_rupee_effect=0.0)
+
+
+def test_displaced_rationale_must_have_zero_rupee_effect():
+    """A displaced debt has no adjustment of its own by definition. A
+    nonzero effect means it should have been attributed to its OWN
+    mechanism instead -- so the two can never silently disagree."""
+    with pytest.raises(ValidationError):
+        DivergenceRationale(
+            mechanism=DivergenceMechanism.DISPLACED, net_rupee_effect=500.0, displaced_by="h1"
+        )
+
+
+@pytest.mark.parametrize(
+    "mechanism", [DivergenceMechanism.TAX, DivergenceMechanism.FEE, DivergenceMechanism.UTILISATION]
+)
+def test_non_displaced_rationales_reject_displaced_by(mechanism):
+    """The mirror-image guard: a tax/fee/utilisation rationale describes
+    this debt's OWN adjustment, so it must not simultaneously claim
+    something else moved it."""
+    kwargs = {"mechanism": mechanism, "net_rupee_effect": 1.0, "displaced_by": "h1"}
+    if mechanism == DivergenceMechanism.UTILISATION:
+        kwargs["traded_for"] = "credit score protection, not a rupee claim"
+        kwargs["net_rupee_effect"] = 0.0
+    with pytest.raises(ValidationError):
+        DivergenceRationale(**kwargs)
+
+
+def test_displaced_rationale_constructs_when_well_formed():
+    """Positive case, so the three guards above can't pass by making
+    DISPLACED unconstructible entirely."""
+    rationale = DivergenceRationale(
+        mechanism=DivergenceMechanism.DISPLACED, net_rupee_effect=0.0, displaced_by="h1"
+    )
+    assert rationale.displaced_by == "h1"
+    assert rationale.traded_for is None

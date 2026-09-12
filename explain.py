@@ -19,13 +19,14 @@ This is the ONE place in the whole pipeline where hallucination risk
 lives, and the discipline the SYSTEM_PROMPT enforces is this project's
 central, hard-won finding (see DECISIONS.md, "'Adjusted = cheaper' was
 never a valid blanket claim"): a divergence is never just "cheaper" or
-"the better choice" -- it is one of three structurally different claims
+"the better choice" -- it is one of several structurally different claims
 (tax: a guaranteed rupee saving; fee: a ranking justification that is NOT
 a savings guarantee; utilisation: explicitly NOT a rupee claim, a
-credit-score trade-off), and stating the wrong KIND of claim -- calling a
-utilisation promotion a "cost saving," for instance -- is a category
-error, a worse failure than a wrong number. This is exactly what eval/
-is built to measure.
+credit-score trade-off; displaced: no claim about this debt at all, it
+simply got moved by a neighbour), and stating the wrong KIND of claim --
+calling a utilisation promotion a "cost saving," or giving a displaced
+debt a reason it does not have -- is a category error, a worse failure
+than a wrong number. This is exactly what eval/ is built to measure.
 """
 
 from __future__ import annotations
@@ -38,7 +39,7 @@ from schema import AdjustedDebt, ImpactComparison, Portfolio, RepaymentOrdering
 
 SYSTEM_PROMPT = """You are explaining a personalized debt repayment plan to someone who asked "what order should I repay my loans and credit cards in?" -- the same kind of question people ask a financial chat assistant today. Write in clear, direct, conversational prose (second person, "you"), the way a knowledgeable friend would explain it, not a legal disclosure. No headers, no bullet-point spam -- flowing paragraphs are fine, but keep it tight enough to read in under a minute.
 
-You will be given the COMPLETE computed output of a deterministic tax-and-fee-adjusted debt sequencing engine: every debt's balance, stated rate, after-tax rate, and fee-adjusted rate; the naive order (sorted by stated interest rate alone -- the way most tools and AI assistants answer this question today) and the adjusted order this engine recommends instead; every point where the two orders disagree, each already labeled with EXACTLY which of three mechanisms caused it; and a real simulated cost comparison between following each order.
+You will be given the COMPLETE computed output of a deterministic tax-and-fee-adjusted debt sequencing engine: every debt's balance, stated rate, after-tax rate, and fee-adjusted rate; the naive order (sorted by stated interest rate alone -- the way most tools and AI assistants answer this question today) and the adjusted order this engine recommends instead; every point where the two orders disagree, each already labeled with EXACTLY which mechanism caused it; and a real simulated cost comparison between following each order.
 
 Rules, followed exactly -- getting any of these wrong is worse than a rounding error, because it misrepresents what kind of claim is actually being made:
 
@@ -46,10 +47,11 @@ Rules, followed exactly -- getting any of these wrong is worse than a rounding e
 
 2. State the adjusted order plainly as an explicit sequence naming every debt's ID in the order to repay them (for example "cc1, then cc2, then pl1"), and name the naive order the same explicit way too, so the person can see exactly where and how it differs from what a typical avalanche-only tool would tell them. A narrative description of what changed ("it swaps X and Y") is welcome IN ADDITION to the explicit sequence, never as a replacement for it -- the explicit sequence must appear somewhere in your answer.
 
-3. For EVERY divergence point, you are told its mechanism -- "tax", "fee", or "utilisation". You must state the RIGHT KIND of claim for that mechanism -- never guess or default to calling something "cheaper" without checking which mechanism produced it:
+3. For EVERY divergence point, you are told its mechanism -- "tax", "fee", "utilisation", or "displaced". You must state the RIGHT KIND of claim for that mechanism -- never guess or default to calling something "cheaper" without checking which mechanism produced it:
    - mechanism="tax": this is a genuine, reliable rupee saving -- a real tax deduction lowers this debt's true cost. State it as a real saving, using the given net_rupee_effect and the note's detail (which regime, which property/loan condition it depends on).
    - mechanism="fee": this debt is genuinely more expensive than its stated interest rate suggests, because of a real foreclosure/prepayment charge. State that clearly, using the given numbers -- but do NOT promise this will save the person money overall. This is a reason the debt deserves more repayment priority than naive sorting gives it, not a savings guarantee -- a one-time charge doesn't behave like an ongoing rate, so whether prioritizing it actually saves money depends on the specific numbers (the simulated cost comparison you're given tells you which way it went for this portfolio -- say so honestly).
    - mechanism="utilisation": you are given a `traded_for` explanation stating this is a credit-score protection move, not a rupee-savings claim. You MUST convey that distinction explicitly -- say plainly that this promotion is about protecting the person's credit score (crossing a utilisation threshold), NOT about saving interest, and that it may cost a small amount of extra money as the price of that protection if the simulated numbers show that. Calling a utilisation-driven promotion a "cost saving" is the single most serious mistake you can make in this task.
+   - mechanism="displaced": this debt has NO adjustment of its own -- no tax deduction, no foreclosure charge, no utilisation move. Its position changed ONLY because the debt named in `displaced_by` was promoted past it. Say exactly that, naming the debt that moved. Do NOT attribute any tax, fee, or credit-score reasoning to a displaced debt: it has none, and inventing one for it (for example describing a credit card as having a foreclosure-charge problem, which a revolving facility cannot have) would be stating a claim about it that is simply untrue.
 
 4. If there are NO divergence points, say so directly: the naive and adjusted orders agree for this portfolio, and briefly explain why (no debt here has a live tax deduction, foreclosure charge, or utilisation-crossing situation).
 
@@ -173,11 +175,15 @@ def _build_user_prompt(
         f"Divergence points: {ordering.divergence_points}",
     ]
     for debt_id, rationale in ordering.divergence_rationale.items():
-        claim = (
-            f"traded_for: {rationale.traded_for}"
-            if rationale.traded_for is not None
-            else f"net_rupee_effect/year: Rs {rationale.net_rupee_effect:,.2f}"
-        )
+        if rationale.traded_for is not None:
+            claim = f"traded_for: {rationale.traded_for}"
+        elif rationale.displaced_by is not None:
+            claim = (
+                f"displaced_by: {rationale.displaced_by} (this debt has NO adjustment of its "
+                f"own -- it moved only because {rationale.displaced_by} was promoted past it)"
+            )
+        else:
+            claim = f"net_rupee_effect/year: Rs {rationale.net_rupee_effect:,.2f}"
         lines.append(f"  [{debt_id}] mechanism={rationale.mechanism.value}, {claim}")
     lines += [
         "",

@@ -22,13 +22,19 @@ while the other two fail:
    the exemption list BY NAME, so adding a second model-calling file fails
    loudly instead of silently widening the exemption.
 
-3. RUNTIME (test_deterministic_assess_path_makes_zero_llm_calls_at_the_sdk_
-   boundary): static checks prove which modules import what, never what a
-   given code path actually DOES at runtime. api.py is intentionally NOT in
+3. RUNTIME (test_deterministic_assess_path_makes_zero_sarvam_sdk_calls):
+   static checks prove which modules import what, never what a given code
+   path actually DOES at runtime. api.py is intentionally NOT in
    CHECKED_MODULES -- it may reach explain.py on the opt-in path (see
    DECISIONS.md) -- so "the deterministic path calls no model" is a claim
-   only a runtime check can settle. That test replaces the SDK entry point
-   itself with a counter and exercises the real /assess request.
+   only a runtime check can settle. That test replaces the Sarvam SDK entry
+   point with a counter and exercises the real /assess request. Its scope
+   is deliberately narrower than its layer name suggests: it covers the
+   SARVAM SDK specifically, which is the only LLM SDK this project depends
+   on. Layer 2 is what extends the guarantee to every other vendor.
+
+No one of these is the whole guarantee, and the docstrings say so rather
+than letting a reader assume any single test covers more than it does.
 """
 
 from __future__ import annotations
@@ -149,9 +155,14 @@ def _install_counting_fake_sdk(monkeypatch) -> dict[str, int]:
     """Replaces the Sarvam SDK entry point with a counter, so a test can
     assert on ACTUAL attempted SDK usage rather than on which modules are
     imported. Patching at the SDK boundary (`sarvamai.SarvamAI`) rather
-    than at `explain.explain` is the point: it catches ANY route to a
-    model, including one that bypassed explain.py entirely, which is
-    exactly the failure a static import check cannot see."""
+    than at `explain.explain` is the point: it catches any route to the
+    Sarvam SDK, including one that bypassed explain.py entirely, which is
+    exactly the failure a static import check cannot see.
+
+    It counts Sarvam usage only -- a call through another vendor's SDK
+    would not increment it. That gap is covered by
+    test_explain_is_the_only_project_file_that_imports_an_llm_sdk, not by
+    this counter."""
     counts = {"clients_constructed": 0, "completions_called": 0}
 
     class _FakeChat:
@@ -172,20 +183,29 @@ def _install_counting_fake_sdk(monkeypatch) -> dict[str, int]:
     return counts
 
 
-def test_deterministic_assess_path_makes_zero_llm_calls_at_the_sdk_boundary(monkeypatch):
-    """The deterministic path (ADJUST -> SEQUENCE -> IMPACT, everything
-    /assess does when `explain` is not requested) must reach no model at
-    all -- proven by exercising the real request and counting attempted SDK
-    usage at the boundary, not by asserting explain.py isn't imported by
-    name.
+def test_deterministic_assess_path_makes_zero_sarvam_sdk_calls(monkeypatch):
+    """SCOPE, stated precisely: this verifies zero calls through the SARVAM
+    SDK specifically (`sarvamai.SarvamAI`, the only LLM SDK this project
+    actually depends on) when /assess runs with `explain` not requested. It
+    does NOT by itself prove "no LLM call of any kind" -- it would not catch
+    a call made through a different vendor's SDK, a different Sarvam entry
+    point, or raw HTTP to a model endpoint.
 
-    This is a genuinely different claim from the static checks above:
-    explain.py exists, is importable, and IS imported elsewhere in this
-    codebase (api.py's opt-in branch, eval/collect.py). Neither of those
-    facts tells you whether a default /assess call touches a model. This
-    does. The response assertions confirm the deterministic pipeline
-    actually ran rather than short-circuiting, so a zero count can't be
-    achieved by simply doing nothing."""
+    Full multi-SDK coverage comes from
+    test_explain_is_the_only_project_file_that_imports_an_llm_sdk above,
+    which scans every project source file against ALL of
+    FORBIDDEN_IMPORT_ROOTS. The two are complementary and neither is
+    sufficient alone: the static check proves no other file can reach any
+    vendor's SDK, and this runtime check proves the deterministic request
+    path doesn't reach the one SDK that IS present. Read either as the whole
+    guarantee and you would be overstating it.
+
+    Why the runtime half is needed at all: explain.py exists, is importable,
+    and IS imported elsewhere in this codebase (api.py's opt-in branch,
+    eval/collect.py). None of that tells you whether a default /assess call
+    touches a model. This does. The response assertions confirm the
+    deterministic pipeline actually ran rather than short-circuiting, so a
+    zero count can't be achieved by simply doing nothing."""
     counts = _install_counting_fake_sdk(monkeypatch)
     client = TestClient(api_app)
 

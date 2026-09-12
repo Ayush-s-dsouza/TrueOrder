@@ -92,14 +92,22 @@ def compute_divergence_rationale(
 ) -> dict[str, DivergenceRationale]:
     """Every divergence point must be attributed to a mechanism -- see the
     module-level comment in schema.py above RepaymentOrdering for what each
-    mechanism does and does not claim. A debt with no adjustment of its own
-    (net_rupee_effect would be 0 either way) but whose rank still moved was
-    "passively displaced": it borrows the mechanism of whichever OTHER
-    divergent debt actively caused the displacement, keeping its own
-    net_rupee_effect at 0.0 -- this project's samples are all simple
-    pairwise swaps, so there is exactly one such cause; a portfolio where
-    that isn't true raises rather than guessing which of several active
-    mechanisms actually caused a given passive debt's shift.
+    mechanism does and does not claim.
+
+    A debt with no adjustment of its own, but whose rank still moved, was
+    "passively displaced": it is attributed to DISPLACED with
+    net_rupee_effect 0.0 and `displaced_by` naming the debt that actually
+    moved. It used to BORROW the causing debt's mechanism instead, which
+    produced labels that were not merely uninformative but false -- a
+    credit card could come out tagged mechanism="fee" when fee_rules.py
+    states that foreclosure charges cannot apply to a revolving facility
+    at all. Naming the displacement, and its cause, says the true thing
+    and says more.
+
+    This project's samples are all simple pairwise swaps, so there is
+    exactly one such cause; a portfolio where that isn't true raises rather
+    than guessing which of several active mechanisms moved a given passive
+    debt.
     """
     by_id = {ad.debt.debt_id: ad for ad in adjusted_debts}
     own = {debt_id: _own_mechanism(by_id[debt_id]) for debt_id in divergence_points}
@@ -118,11 +126,11 @@ def compute_divergence_rationale(
                 f"to (found {len(causes)}: {sorted(causes)}) -- this needs an explicit design "
                 f"decision for multi-cause divergence groups, not a guess"
             )
-        [cause] = causes.values()
+        [cause_id] = causes.keys()
         rationale[debt_id] = DivergenceRationale(
-            mechanism=cause.mechanism,
+            mechanism=DivergenceMechanism.DISPLACED,
             net_rupee_effect=0.0,
-            traded_for=_UTILISATION_TRADED_FOR if cause.mechanism == DivergenceMechanism.UTILISATION else None,
+            displaced_by=cause_id,
         )
     return rationale
 

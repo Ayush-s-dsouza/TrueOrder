@@ -70,7 +70,7 @@ import pytest
 
 from adjust import adjust_portfolio
 from impact import MAX_SIMULATION_MONTHS, compare_impact, simulate_waterfall
-from schema import Portfolio, PropertyOccupancy, RateType
+from schema import AutoLoan, Portfolio, PropertyOccupancy, RateType, TaxRegime
 from sequence import compute_ordering
 from synth.generator import generate_portfolio
 
@@ -238,6 +238,81 @@ def test_utilisation_mechanism_net_cost_delta_is_not_the_correctness_metric():
     test_sequence.py), not this number."""
     comparison = _impact_comparison("utilisation_threshold")
     assert abs(comparison.net_cost_delta) < 0.01 * comparison.naive.total_interest_paid
+
+
+@pytest.mark.parametrize("stated_tenure_months", [1, 2, 3, 6, 18, 60])
+def test_adjust_and_impact_agree_on_whether_a_foreclosure_fee_is_incurred(stated_tenure_months):
+    """REGRESSION for a real, systematic contradiction between two stages
+    (see DECISIONS.md). adjust.py used to annualize the one-time charge over
+    `remaining_tenure_months`, while impact.py charged the fee only when
+    payoff landed before that same stated field. Because that field has no
+    schema constraint tying it to the loan's actual balance/minimum
+    payment/APR, the two moved in OPPOSITE directions as it shrank: at a
+    1-month stated tenure adjust.py inflated the rate by +60 percentage
+    points (9.00% -> 69.00%) for a fee impact.py then charged at Rs 0.00.
+
+    Both stages now key off the same derived quantity -- the month this
+    loan would retire on its minimum payment alone -- so "did adjust.py
+    price in a fee" and "did impact.py actually charge one" must agree for
+    every stated tenure, including the short ones that exposed the bug.
+    The stated tenure is varied here precisely because it must no longer
+    drive this behaviour at all."""
+    portfolio = Portfolio(
+        borrower_id="fee_agreement",
+        tax_regime=TaxRegime.OLD,
+        marginal_tax_rate_pct=30.0,
+        debts=[
+            AutoLoan(
+                debt_id="a1",
+                outstanding_balance=400_000,
+                stated_apr_pct=9.0,
+                remaining_tenure_months=stated_tenure_months,
+                minimum_payment=5_000,
+                rate_type=RateType.FIXED,
+                foreclosure_charge_pct=5.0,
+            )
+        ],
+    )
+    [adjusted] = adjust_portfolio(portfolio)
+    adjust_priced_in_a_fee = adjusted.foreclosure_adjusted_rate_pct > adjusted.debt.stated_apr_pct
+
+    result = simulate_waterfall(portfolio, order=["a1"], monthly_surplus=60_000.0)
+    impact_charged_a_fee = result.total_foreclosure_fees_paid > 0
+
+    assert adjust_priced_in_a_fee == impact_charged_a_fee, (
+        f"stage disagreement at stated_tenure={stated_tenure_months}mo: adjust priced in a fee="
+        f"{adjust_priced_in_a_fee} (rate {adjusted.debt.stated_apr_pct} -> "
+        f"{adjusted.foreclosure_adjusted_rate_pct}), impact charged="
+        f"{result.total_foreclosure_fees_paid}"
+    )
+
+
+def test_foreclosure_fee_surcharge_no_longer_explodes_at_a_short_stated_tenure():
+    """The specific pathology the fix removes: a stated tenure of 1 month
+    on a loan that genuinely takes ~8 years to retire at its minimum
+    payment used to produce a +60pp surcharge, making a 9% auto loan
+    outrank a 42% credit card. The surcharge must now reflect the loan's
+    real payoff horizon, not the stated field."""
+    def surcharge_for(stated_tenure_months: int) -> float:
+        portfolio = Portfolio(
+            borrower_id="t",
+            tax_regime=TaxRegime.OLD,
+            marginal_tax_rate_pct=30.0,
+            debts=[
+                AutoLoan(
+                    debt_id="a1", outstanding_balance=400_000, stated_apr_pct=9.0,
+                    remaining_tenure_months=stated_tenure_months, minimum_payment=5_000,
+                    rate_type=RateType.FIXED, foreclosure_charge_pct=5.0,
+                )
+            ],
+        )
+        [adjusted] = adjust_portfolio(portfolio)
+        return adjusted.foreclosure_adjusted_rate_pct - adjusted.debt.stated_apr_pct
+
+    # Identical loans differing ONLY in the stated tenure field must now get
+    # an identical surcharge, since that field no longer drives the maths.
+    assert surcharge_for(1) == pytest.approx(surcharge_for(60))
+    assert surcharge_for(1) < 10.0, "a one-time 5% charge must not inflate the rate by tens of points"
 
 
 def test_foreclosure_fee_only_charged_on_early_payoff_of_a_fixed_rate_loan():

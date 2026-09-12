@@ -87,7 +87,8 @@ def _fee_adjustment(debt: Debt) -> tuple[float, str]:
             rate_type=debt.rate_type.value,
             stated_rate_pct=debt.stated_apr_pct,
             foreclosure_charge_pct=debt.foreclosure_charge_pct,
-            remaining_tenure_months=debt.remaining_tenure_months,
+            outstanding_balance=debt.outstanding_balance,
+            minimum_payment=debt.minimum_payment,
         )
         return result.foreclosure_adjusted_rate_pct, result.note
 

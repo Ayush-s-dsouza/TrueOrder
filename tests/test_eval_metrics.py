@@ -11,6 +11,8 @@ disagreed (see DECISIONS.md for the full story of each).
 
 from __future__ import annotations
 
+import pytest
+
 from adjust import adjust_portfolio
 from eval.ground_truth import ground_truth_for_case
 from eval.metrics import (
@@ -293,3 +295,74 @@ def test_order_sequence_correct_returns_none_when_a_debt_is_never_mentioned():
     )
     gt = ground_truth_for_case(_case_for_portfolio(portfolio))
     assert adjusted_order_sequence_correct("pl1 is your only debt mentioned here.", gt) is None
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Every one of these is a VERBATIM substring of a real collected
+        # explanation that was correct and honest, and that an earlier
+        # version of COSTLIER_ADMISSION_PATTERN scored as a failure.
+        "it costs slightly more in practice",
+        "the adjusted sequence costs about Rs 1,417.93 more over the life of the loans",
+        "the adjusted plan costs Rs 1,891.08 more than the naive plan",
+        "the adjusted path costs you Rs 297.11 more",
+        "the net cost rises to Rs 52,354.68 compared with Rs 51,405.01 on the naive approach",
+        "Rs 587.64 above the naive order's Rs 4,957,457.57",
+        "which is Rs 270.11 higher than the Rs 59,289.32 naive net_cost",
+        "the adjusted order costs you an extra Rs 240.11 in net interest",
+    ],
+)
+def test_costlier_admission_pattern_covers_the_comparative_family(text):
+    """Enumerating phrasings is inherently incomplete, which is exactly why
+    this project reports its faithfulness rate as a LOWER bound (see
+    eval/metrics.py's docstring). These are the phrasings actually observed
+    across two full collection runs; each was a false negative until added."""
+    assert COSTLIER_ADMISSION_PATTERN.search(text), f"missed a real admission: {text!r}"
+
+
+@pytest.mark.parametrize(
+    "text", ["the adjusted sequence costs you less overall", "following this order saves you money",
+             "the adjusted plan is cheaper", "this results in a lower net cost"]
+)
+def test_costlier_pattern_does_not_fire_on_favourable_phrasings(text):
+    """The mirror guard: broadening the costlier pattern must not make it
+    match statements that say the opposite, or every favourable case would
+    start failing instead."""
+    assert not COSTLIER_ADMISSION_PATTERN.search(text)
+    assert SAVINGS_LANGUAGE_PATTERN.search(text)
+
+
+def test_order_sequence_survives_a_repeated_id_before_the_real_listing():
+    """Real bug from the post-fix re-run. The explanation said, correctly,
+    '...your credit card (cc1) belongs at the top [long clause] ... Its
+    adjusted repayment order is cc1, then pl1, then e1.' The previous
+    implementation collapsed the two cc1 mentions into one slot keeping the
+    FIRST position, so the run was anchored ~90 characters too early and the
+    gap check failed on a correct answer."""
+    from schema import CreditCard, EducationLoan, PersonalLoan, Portfolio, RateType, TaxRegime
+
+    portfolio = Portfolio(
+        borrower_id="t", tax_regime=TaxRegime.OLD, marginal_tax_rate_pct=30.0,
+        debts=[
+            CreditCard(debt_id="cc1", outstanding_balance=40_000, stated_apr_pct=39.0,
+                       remaining_tenure_months=360, minimum_payment=2_000,
+                       current_utilisation_pct=20.0, aggregate_utilisation_pct=20.0),
+            PersonalLoan(debt_id="pl1", outstanding_balance=150_000, stated_apr_pct=9.0,
+                         remaining_tenure_months=24, minimum_payment=7_000, rate_type=RateType.FLOATING),
+            EducationLoan(debt_id="e1", outstanding_balance=600_000, stated_apr_pct=11.0,
+                          remaining_tenure_months=72, minimum_payment=9_000,
+                          years_since_first_repayment=2),
+        ],
+    )
+    gt = ground_truth_for_case(_case_for_portfolio(portfolio))
+    assert gt.ordering.adjusted_order == ["cc1", "pl1", "e1"]
+
+    text = (
+        "A typical avalanche-only tool would tell you to hit your credit card (cc1) first, "
+        "then your education loan (e1), then your personal loan (pl1). The adjusted engine "
+        "agrees that your credit card (cc1) belongs at the top - it carries no tax deduction "
+        "and a revolving card cannot carry a foreclosure charge - but the rest of the order "
+        "changes. Its adjusted repayment order is cc1, then pl1, then e1."
+    )
+    assert adjusted_order_sequence_correct(text, gt) is True

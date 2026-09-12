@@ -41,6 +41,7 @@ stages' ranking to agree with it after the fact.
 
 from __future__ import annotations
 
+import fee_rules
 import tax_rules
 from schema import (
     AutoLoan,
@@ -155,8 +156,23 @@ def simulate_waterfall(portfolio: Portfolio, order: list[str], monthly_surplus: 
             balances[debt_id] = 0.0
             debt = debts_by_id[debt_id]
 
-            if _is_fixed_rate_loan(debt) and month < debt.remaining_tenure_months:
-                total_foreclosure_fees_paid += pre_payment_balance[debt_id] * (debt.foreclosure_charge_pct / 100)
+            # "Foreclosed early" means retired sooner than this loan would
+            # have been on its minimum payment alone -- the same derived
+            # horizon fee_rules/adjust.py annualize the charge over, so the
+            # two stages cannot disagree about whether a fee is incurred.
+            # Previously this keyed off `remaining_tenure_months`, a stated
+            # field with no schema constraint tying it to the loan's actual
+            # cash flows, which made the stages contradict each other
+            # systematically at short stated tenures (see DECISIONS.md).
+            if _is_fixed_rate_loan(debt):
+                natural_months = fee_rules.natural_payoff_months(
+                    outstanding_balance=debt.outstanding_balance,
+                    stated_apr_pct=debt.stated_apr_pct,
+                    minimum_payment=debt.minimum_payment,
+                )
+                foreclosed_early = natural_months is None or month < natural_months
+                if foreclosed_early:
+                    total_foreclosure_fees_paid += pre_payment_balance[debt_id] * (debt.foreclosure_charge_pct / 100)
 
             if isinstance(debt, (HomeLoan, EducationLoan)):
                 total_tax_benefit_realized += _annual_tax_benefit(
