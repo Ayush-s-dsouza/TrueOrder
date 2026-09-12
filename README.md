@@ -11,18 +11,19 @@ they diverge.
 Asked directly -- *"Hmmmm, tell me, ig I hypothetically had 5 EMIs and 4
 credit cards, are you able to tell me the order in which to repay them
 efficiently?"* -- Dhruva, Oolka's in-app AI assistant, returns the two
-textbook heuristics and nothing else.
+textbook heuristics.
 
-![Dhruva, Oolka's in-app AI assistant, answering a debt-ordering question
-with the avalanche and snowball heuristics only](docs/dhruva_naive_avalanche.png)
+![Dhruva, Oolka's in-app AI assistant, answering a debt-ordering question with the avalanche and snowball heuristics only](docs/dhruva_naive_avalanche.png)
 
 *Dhruva, 06/09/2026 09:02 PM. Asked the question above, it offers "Avalanche
 Method (Save Interest)" -- list debts by interest rate, highest rate first --
 and "Snowball Method (Quick Wins)" -- list by balance size, smallest balance
-first -- closing with "Credit cards usually have much higher interest rates
-than personal loans, so they are often the best place to start regardless of
-the method." No mention of tax regime, prepayment-charge asymmetry, or
-credit-utilisation tension, and no question asked about any of them.*
+first -- then, under a bolded "My advice:", "Credit cards usually have much
+higher interest rates than personal loans, so they are often the best place
+to start regardless of the method." The bubble is clipped mid-word there by
+the phone's scroll fold. Nowhere in the visible response is there any mention
+of tax regime, prepayment-charge asymmetry, or credit-utilisation tension,
+and no question is asked about any of them.*
 
 Both heuristics rank on a single snapshot field: stated rate, or balance.
 Neither asks which tax regime the borrower is in, though Section 24(b) is
@@ -38,12 +39,11 @@ RBI/2019-20/29 (2 Aug 2019) and are now consolidated under the RBI
 URLs are in [tax_rules.py](tax_rules.py) and [fee_rules.py](fee_rules.py);
 every rule this project applies carries one.
 
-Beyond the assistant, and reported here as my own in-app observation rather
-than a sourced claim (Oolka app, September 2026): the Cards/Loans tabs
-present each instrument on its own, and the premium tier is utilisation
-alerts and bureau-dispute automation -- genuinely useful, but not
-avalanche/snowball optimization or lump-sum-split guidance across a
-portfolio.
+Beyond the assistant -- and this is what I personally saw in the Oolka app in
+September 2026, not a sourced claim: the Cards/Loans tabs each showed one
+instrument at a time, and the premium tier on offer was utilisation alerts
+and bureau-dispute automation -- genuinely useful, but not avalanche/snowball
+optimization or lump-sum-split guidance across a portfolio.
 
 Naive avalanche isn't wrong in general -- for an all-unsecured portfolio
 with no tax-advantaged debt, it's the right answer, and this project's own

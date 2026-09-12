@@ -29,19 +29,23 @@ step 1 or step 2 raised it.
 
 ## Step 4
 
-If you use an AI assistant instead — asking Dhruva directly "I have 5 EMIs
-and 4 credit cards, what order should I repay them in?" — you get exactly
-the avalanche answer from step 3, restated in prose. No question about your
-tax regime, no question about whether a property is self-occupied or
-rented out, no mention that a floating-rate loan and a fixed-rate loan
-carry very different prepayment consequences.
+If you use an AI assistant instead — asking Dhruva directly "Hmmmm, tell
+me, ig I hypothetically had 5 EMIs and 4 credit cards, are you able to tell
+me the order in which to repay them efficiently?" — you get the avalanche
+answer from step 3 alongside the snowball alternative, restated in prose,
+then advice to start with credit cards regardless of method. No question
+about your tax regime, no question about whether a property is
+self-occupied or rented out, no mention that a floating-rate loan and a
+fixed-rate loan carry very different prepayment consequences. The exchange
+is reproduced in full in README.md.
 
 ## Step 5
 
 You check whether your budgeting or credit-monitoring app does any better.
-For Oolka specifically, the premium tier is utilisation alerts and bureau
-dispute automation — genuinely useful, but not avalanche/snowball
-optimization and not lump-sum-split guidance across a portfolio. The gap
+For Oolka specifically, what I saw in the app in September 2026 was a
+premium tier of utilisation alerts and bureau dispute automation —
+genuinely useful, but not avalanche/snowball optimization and not
+lump-sum-split guidance across a portfolio. The gap
 this runbook is describing isn't filled by upgrading.
 
 ## Step 6
