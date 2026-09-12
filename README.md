@@ -8,23 +8,51 @@ they diverge.
 
 ## The gap
 
-Asked directly -- "I have 5 EMIs and 4 credit cards, what order should I
-repay them in?" -- Dhruva, Oolka's in-app AI assistant, returns textbook
-avalanche: sort by stated interest rate, highest first. No question about
-tax regime, no question
-about whether a property is self-occupied or rented out, no mention that a
-floating-rate loan and a fixed-rate loan of the same stated APR carry very
-different prepayment consequences. Checking independently: the in-app
-Cards/Loans tabs are per-instrument only, and Oolka's premium tier is
-utilisation alerts and bureau-dispute automation -- genuinely useful, but
-not avalanche/snowball optimization or lump-sum-split guidance across a
-portfolio. Naive avalanche isn't wrong in general -- for an all-unsecured
-portfolio with no tax-advantaged debt, it's the right answer, and this
-project's own "agreement case" sample confirms the two orderings converge
-exactly when nothing distinguishes them. It's wrong specifically in the
-cases that produce a genuine conflict, and those are what the rest of this
-README is about. See [RUNBOOK.md](RUNBOOK.md) for the full manual process
-this replaces, step by step.
+Asked directly -- *"Hmmmm, tell me, ig I hypothetically had 5 EMIs and 4
+credit cards, are you able to tell me the order in which to repay them
+efficiently?"* -- Dhruva, Oolka's in-app AI assistant, returns the two
+textbook heuristics and nothing else.
+
+![Dhruva, Oolka's in-app AI assistant, answering a debt-ordering question
+with the avalanche and snowball heuristics only](docs/dhruva_naive_avalanche.png)
+
+*Dhruva, 06/09/2026 09:02 PM. Asked the question above, it offers "Avalanche
+Method (Save Interest)" -- list debts by interest rate, highest rate first --
+and "Snowball Method (Quick Wins)" -- list by balance size, smallest balance
+first -- closing with "Credit cards usually have much higher interest rates
+than personal loans, so they are often the best place to start regardless of
+the method." No mention of tax regime, prepayment-charge asymmetry, or
+credit-utilisation tension, and no question asked about any of them.*
+
+Both heuristics rank on a single snapshot field: stated rate, or balance.
+Neither asks which tax regime the borrower is in, though Section 24(b) is
+capped at Rs 2,00,000 for a self-occupied property under the old regime and
+blocked outright under the new one (Section 115BAC); neither asks whether a
+property is self-occupied or let out, though that changes the same loan's
+after-tax cost; and neither distinguishes a floating-rate loan from a
+fixed-rate loan at the same stated APR, though only the fixed-rate one can
+carry a foreclosure charge at all -- prepayment charges on floating-rate
+loans to individuals for non-business purposes have been prohibited since
+RBI/2019-20/29 (2 Aug 2019) and are now consolidated under the RBI
+(Pre-payment Charges on Loans) Directions, 2025. Full citations with source
+URLs are in [tax_rules.py](tax_rules.py) and [fee_rules.py](fee_rules.py);
+every rule this project applies carries one.
+
+Beyond the assistant, and reported here as my own in-app observation rather
+than a sourced claim (Oolka app, September 2026): the Cards/Loans tabs
+present each instrument on its own, and the premium tier is utilisation
+alerts and bureau-dispute automation -- genuinely useful, but not
+avalanche/snowball optimization or lump-sum-split guidance across a
+portfolio.
+
+Naive avalanche isn't wrong in general -- for an all-unsecured portfolio
+with no tax-advantaged debt, it's the right answer, and this project's own
+"agreement case" sample ([samples/sample_001_agreement_case.json](samples/sample_001_agreement_case.json))
+confirms the two orderings converge exactly when nothing distinguishes them.
+It's wrong specifically in the cases that produce a genuine conflict, and
+those are what the rest of this README is about. See
+[RUNBOOK.md](RUNBOOK.md) for the full manual process this replaces, step by
+step.
 
 ## The core finding
 
